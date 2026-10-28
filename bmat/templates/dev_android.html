@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bmat-about text-white vstack gap-4">
+  <header class="bmat-about-hero">
+    <p class="bmat-about-eyebrow mb-2">Developer downloads</p>
+    <h1 class="bmat-about-title fw-bold mb-3">BMW Android — Play release kit</h1>
+    <p class="bmat-about-lead mb-0">
+      Everything used to publish Better Mental Wellness on Google Play: the signed Android App Bundle, store listing text, icon, feature graphic, screenshots, App content declarations, and the production checklist.
+    </p>
+  </header>
+
+  {% if kit %}
+  <section class="bmat-mini-card">
+    <h2 class="h5 fw-bold mb-3 bmat-about-heading-gradient">Download</h2>
+    <dl class="row mb-3">
+      <dt class="col-sm-3">Version</dt><dd class="col-sm-9">{{ kit.version }}</dd>
+      <dt class="col-sm-3">Package</dt><dd class="col-sm-9"><code class="text-white">com.cije.bmw</code></dd>
+      <dt class="col-sm-3">File</dt><dd class="col-sm-9"><code class="text-white">{{ kit.filename }}</code></dd>
+      <dt class="col-sm-3">Size</dt><dd class="col-sm-9">{{ kit.size_human }} ({{ "{:,}".format(kit.size) }} bytes)</dd>
+      <dt class="col-sm-3">SHA-256</dt><dd class="col-sm-9"><code class="text-white text-break">{{ kit.sha256 }}</code></dd>
+      <dt class="col-sm-3">Published</dt><dd class="col-sm-9">{{ kit.published }}</dd>
+    </dl>
+    <a class="btn btn-warning btn-lg" href="{{ url_for('main.dev_android_download', filename=kit.filename) }}" download>Download the kit (.zip)</a>
+    <p class="small text-white-50 mt-3 mb-0">
+      Public copy: the Play reviewer login is not included. It is provided privately in Play Console. No signing keys or passwords are in this file.
+    </p>
+  </section>
+
+  <section class="bmat-mini-card">
+    <h2 class="h5 fw-bold mb-2 bmat-about-heading-gradient">What's inside</h2>
+    <ul class="mb-0">
+      <li><b>01-upload</b> — signed App Bundle (<code class="text-white">bmw-cije-play-v1.aab</code>, package <code class="text-white">com.cije.bmw</code>, versionCode 1, minSdk 24), release name and notes</li>
+      <li><b>02-store-listing</b> — title, short and full description, category, contact details</li>
+      <li><b>03-graphics</b> — 512 px icon, 1024×500 feature graphic, phone screenshots</li>
+      <li><b>04-app-content-declarations</b> — privacy policy, Data safety, content rating, health apps, account deletion, AI content</li>
+      <li><b>05-technical</b> — Digital Asset Links, rebuild and versioning notes</li>
+      <li><b>06-checklist</b> — step-by-step production checklist</li>
+    </ul>
+  </section>
+  {% else %}
+  <section class="bmat-mini-card">
+    <p class="mb-0">The release kit isn't available right now. Please check back later.</p>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

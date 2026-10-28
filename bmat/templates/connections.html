@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+  <div>
+    <p class="mb-1"><a class="link-light small" href="{{ url_for('main.personal_profile') }}">← Personal profile</a></p>
+    <h2 class="fw-bold mb-1">Connections</h2>
+    <div class="text-muted">
+      Name people you trust, optionally allow BMW to <strong class="text-white">email</strong> them when you record a check-in request.
+      Email only goes out with your master consent and a per-contact checkbox — never SMS in this release, and never clinical scores.
+    </div>
+  </div>
+</div>
+
+<div class="bmat-mini-card mb-3">
+  <div class="small text-muted mb-2">Email consent</div>
+  <p class="text-muted small mb-3">
+    Master switch: allow BMW to email contacts you mark below when you tap
+    <strong class="text-white">Record check-in request</strong>.
+    Limit: {{ email_batches_limit }} email batches per UTC day
+    (used today: {{ email_batches_today }}).
+    {% if not mail_enabled %}
+    <span class="text-warning">Server email is currently disabled (MAIL_ENABLED=0).</span>
+    {% endif %}
+  </p>
+  <form method="post" action="{{ url_for('main.connections_email_consent') }}" class="d-flex flex-wrap align-items-center gap-3">
+    {{ consent_form.hidden_tag() }}
+    <div class="form-check mb-0">
+      {{ consent_form.notify_contacts_email(class="form-check-input", id=consent_form.notify_contacts_email.id) }}
+      <label class="form-check-label" for="{{ consent_form.notify_contacts_email.id }}">{{ consent_form.notify_contacts_email.label.text }}</label>
+    </div>
+    {{ consent_form.submit(class="btn btn-sm btn-warning") }}
+  </form>
+  {% if current_user.notify_contacts_email_at %}
+  <div class="small text-muted mt-2">Consent last updated {{ current_user.notify_contacts_email_at.strftime("%Y-%m-%d %H:%M") }} UTC</div>
+  {% endif %}
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="bmat-mini-card h-100">
+      <div class="small text-muted mb-2">Trusted contacts</div>
+      <p class="text-muted small mb-3">
+        Email and phone stay in your account. BMW emails a contact only if master consent is on,
+        their email is set, and <strong class="text-white">email on check-in</strong> is checked.
+      </p>
+
+      <form method="post" action="{{ url_for('main.connections') }}" class="vstack gap-3">
+        {{ add_form.hidden_tag() }}
+        <div>
+          <label class="form-label fw-semibold" for="{{ add_form.label.id }}">{{ add_form.label.label.text }}</label>
+          {{ add_form.label(class="form-control") }}
+        </div>
+        <div>
+          <label class="form-label fw-semibold" for="{{ add_form.contact_email.id }}">{{ add_form.contact_email.label.text }}</label>
+          {{ add_form.contact_email(class="form-control") }}
+        </div>
+        <div>
+          <label class="form-label fw-semibold" for="{{ add_form.phone.id }}">{{ add_form.phone.label.text }}</label>
+          {{ add_form.phone(class="form-control") }}
+        </div>
+        <div>
+          <label class="form-label fw-semibold" for="{{ add_form.notes.id }}">{{ add_form.notes.label.text }}</label>
+          {{ add_form.notes(class="form-control", rows=2) }}
+        </div>
+        <div class="form-check">
+          {{ add_form.email_on_check_in(class="form-check-input", id=add_form.email_on_check_in.id) }}
+          <label class="form-check-label" for="{{ add_form.email_on_check_in.id }}">{{ add_form.email_on_check_in.label.text }}</label>
+        </div>
+        {{ add_form.submit(class="btn btn-warning") }}
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="bmat-mini-card h-100">
+      <div class="small text-muted mb-2">Check in on me</div>
+      <p class="text-muted small mb-3">
+        Records a private timeline entry. If consent and contact flags are set, BMW also sends a short plain-text email
+        (your display name + optional note only — no screening scores).
+      </p>
+
+      <form method="post" action="{{ url_for('main.connections_check_in_on_me') }}" class="vstack gap-3">
+        {{ ping_form.hidden_tag() }}
+        <div>
+          <label class="form-label fw-semibold" for="{{ ping_form.message.id }}">{{ ping_form.message.label.text }}</label>
+          {{ ping_form.message(class="form-control") }}
+        </div>
+        {{ ping_form.submit(class="btn btn-outline-light") }}
+      </form>
+    </div>
+  </div>
+</div>
+
+{% if contacts %}
+<div class="bmat-mini-card mt-3">
+  <div class="small text-muted mb-3">Your contacts</div>
+  <div class="table-responsive">
+    <table class="table table-dark table-borderless align-middle mb-0" style="--bs-table-bg: transparent;">
+      <thead>
+        <tr class="text-muted small">
+          <th scope="col">Label</th>
+          <th scope="col">Email</th>
+          <th scope="col">Phone</th>
+          <th scope="col">Email on check-in</th>
+          <th scope="col" class="text-end">Remove</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in contacts %}
+        <tr>
+          <td class="fw-semibold">{{ c.label }}</td>
+          <td>{{ c.contact_email or "—" }}</td>
+          <td>{{ c.phone or "—" }}</td>
+          <td>
+            <form method="post" action="{{ url_for('main.connections_contact_email_toggle') }}" class="d-flex align-items-center gap-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="contact_id" value="{{ c.id }}">
+              <div class="form-check mb-0">
+                <input class="form-check-input" type="checkbox" name="email_on_check_in" value="1" id="email_ci_{{ c.id }}"
+                  {% if c.email_on_check_in %}checked{% endif %}
+                  {% if not c.contact_email %}disabled title="Add an email first"{% endif %}
+                  onchange="this.form.submit()">
+                <label class="form-check-label small" for="email_ci_{{ c.id }}">{% if c.email_on_check_in %}On{% else %}Off{% endif %}</label>
+              </div>
+            </form>
+          </td>
+          <td class="text-end">
+            <form method="post" action="{{ url_for('main.connections_delete_contact') }}" class="d-inline" onsubmit="return confirm('Remove this contact?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="contact_id" value="{{ c.id }}">
+              <button type="submit" class="btn btn-sm btn-link text-danger text-decoration-none p-0">Remove</button>
+            </form>
+          </td>
+        </tr>
+        {% if c.notes %}
+        <tr>
+          <td colspan="5" class="text-muted small pt-0 pb-3">{{ c.notes }}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if recent_pings %}
+<div class="bmat-mini-card mt-3">
+  <div class="small text-muted mb-2">Recent check-in requests (your log)</div>
+  <ul class="list-unstyled mb-0">
+    {% for p in recent_pings %}
+    <li class="border-bottom border-white border-opacity-10 py-2{% if loop.last %} border-0{% endif %}">
+      <div class="small text-muted">{{ p.created_at.strftime("%Y-%m-%d %H:%M") }} UTC
+        {% if p.notify_email_status %}
+        · email:
+        {% if p.notify_email_status == 'sent' %}
+          sent ({{ p.notify_email_sent_count }})
+        {% elif p.notify_email_status == 'partial' %}
+          partial ({{ p.notify_email_sent_count }})
+        {% elif p.notify_email_status == 'failed' %}
+          failed
+        {% elif p.notify_email_status == 'rate_limited' %}
+          rate limited
+        {% elif p.notify_email_status == 'no_consent' %}
+          consent off
+        {% elif p.notify_email_status == 'no_recipients' %}
+          no eligible contacts
+        {% elif p.notify_email_status == 'disabled' %}
+          mail disabled
+        {% else %}
+          {{ p.notify_email_status }}
+        {% endif %}
+        {% endif %}
+      </div>
+      {% if p.message %}
+      <div class="mt-1">{{ p.message }}</div>
+      {% else %}
+      <div class="mt-1 text-muted">(no note)</div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}

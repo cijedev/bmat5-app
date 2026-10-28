@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+  <div>
+    <h2 class="fw-bold mb-1">Care Plan</h2>
+    <div class="text-muted">Adaptive suggestions from your check-ins and screenings. Order and resources learn from actions you mark done, <a href="{{ url_for('main.personal_profile') }}" class="link-light fw-semibold">Personal profile</a> (connections &amp; personalization), and <a href="{{ url_for('main.culture') }}" class="link-light fw-semibold">Cultural fit</a> (tone).</div>
+  </div>
+  <div class="d-flex gap-2">
+    <span class="badge text-bg-light text-dark">Wellness {{ wellness_score }}</span>
+    <span class="badge text-bg-warning text-dark">Streak {{ streak_days }}</span>
+  </div>
+</div>
+
+<hr class="my-3">
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-7">
+    <div class="bmat-mini-card h-100">
+      <div class="small text-muted mb-2">Recommended for you</div>
+      {% for rec in plan.recommended %}
+        <div class="d-flex gap-2 mb-2">
+          <span class="bmat-dot-sm"></span>
+          <div>{{ rec }}</div>
+        </div>
+      {% endfor %}
+      {% if insights %}
+      <hr class="border-white border-opacity-10 my-3">
+      <div class="small text-muted mb-2">What your patterns suggest</div>
+      {% for insight in insights[:2] %}
+        <div class="d-flex gap-2 mb-2">
+          <span class="bmat-dot-sm"></span>
+          <div>{{ insight }}</div>
+        </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="bmat-mini-card h-100">
+      <div class="small text-muted mb-2">Featured resource</div>
+      {% if plan.featured_resource %}
+        <h5 class="fw-bold mb-1">{{ plan.featured_resource.title }}</h5>
+        <div class="text-muted mb-3">{{ plan.featured_resource.what }}</div>
+        <a class="btn btn-sm btn-warning" href="https://www.youtube.com/watch?v={{ plan.featured_resource.youtube }}" target="_blank" rel="noopener">
+          Watch featured video
+        </a>
+      {% else %}
+        <div class="text-muted">Complete more check-ins to personalize this section further.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Today’s Focus -->
+<div class="mb-4">
+  <h5 class="fw-bold mb-2">Today’s focus</h5>
+  {% if plan.focus and plan.focus|length > 0 %}
+    <div class="d-flex flex-wrap gap-2">
+      {% for f in plan.focus %}
+        <span class="badge rounded-pill text-bg-light text-dark px-3 py-2">{{ f }}</span>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-muted">No strong signals detected — keep doing the basics that support you.</div>
+  {% endif %}
+</div>
+
+<!-- Tiny Actions Premium + Videos -->
+<div class="mb-5">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <h5 class="fw-bold mb-0">Tiny actions (10 minutes or less)</h5>
+    <div class="text-muted small">Completed today: {{ completed_today|length }}</div>
+  </div>
+
+  <div class="row g-4">
+    {% for a in plan.actions %}
+      <div class="col-lg-6 col-md-6 col-12">
+        <div class="card h-100 bmat-action-card">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="bmat-action-title">{{ a.title }}</div>
+              {% if a.key in completed_today %}
+                <span class="bmat-action-badge bmat-action-badge-done">Done today</span>
+              {% else %}
+                <span class="bmat-action-badge">Quick</span>
+              {% endif %}
+            </div>
+
+            <div class="bmat-action-body mb-3">{{ a.how }}</div>
+            {% if a.cultural_hint %}
+            <div class="small text-white-50 mb-3 fst-italic">{{ a.cultural_hint }}</div>
+            {% endif %}
+
+            {% if a.youtube %}
+              <div class="bmat-video-wrap ratio" style="--bs-aspect-ratio: 62%; margin-bottom: .6rem;">
+                <iframe
+                  src="https://www.youtube.com/embed/{{ a.youtube }}"
+                  title="{{ a.title }}"
+                  frameborder="0"
+                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                  loading="lazy"></iframe>
+                <div class="bmat-video-play"><span></span></div>
+              </div>
+
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                <a class="bmat-chip-link" href="https://www.youtube.com/watch?v={{ a.youtube }}" target="_blank" rel="noopener">
+                  Watch <span aria-hidden="true">→</span>
+                </a>
+                <a class="bmat-chip-link" href="https://img.youtube.com/vi/{{ a.youtube }}/hqdefault.jpg" target="_blank" rel="noopener">
+                  Thumbnail <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+            {% endif %}
+
+            {% if a.key in completed_today %}
+            <form method="post" action="{{ url_for('main.uncomplete_action') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+              <input type="hidden" name="action_key" value="{{ a.key }}">
+              <input type="hidden" name="next" value="{{ url_for('main.careplan') }}">
+              <button class="btn btn-sm btn-outline-light">Undo completion</button>
+            </form>
+            {% else %}
+            <form method="post" action="{{ url_for('main.complete_action') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+              <input type="hidden" name="action_key" value="{{ a.key }}">
+              <input type="hidden" name="action_title" value="{{ a.title }}">
+              <input type="hidden" name="next" value="{{ url_for('main.careplan') }}">
+              <button class="btn btn-sm btn-warning">Mark as done</button>
+            </form>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% if plan.representation_spotlight and plan.representation_spotlight|length > 0 %}
+<div class="mb-4">
+  <h5 class="fw-bold mb-2">Diverse voices & wellness media</h5>
+  <div class="text-muted mb-3">Curated picks you can turn on or off under <a href="{{ url_for('main.culture') }}" class="link-light fw-semibold">Cultural fit</a>.</div>
+  <div class="row g-4">
+    {% for r in plan.representation_spotlight %}
+    <div class="col-lg-6 col-md-6 col-12">
+      <div class="card h-100 bmat-resource-card border border-warning border-opacity-25">
+        <div class="card-body">
+          <div class="d-flex align-items-start justify-content-between gap-2">
+            <div>
+              <h6 class="fw-semibold mb-1">{{ r.title }}</h6>
+              <div class="small text-muted">{{ r.what }}</div>
+              <div class="small text-muted mt-1">{{ r.when }}</div>
+            </div>
+            <span class="badge text-bg-warning text-dark align-self-start">Voices</span>
+          </div>
+          {% if r.youtube %}
+          <div class="mt-3">
+            <div class="bmat-video-wrap ratio" style="--bs-aspect-ratio: 56%; margin-bottom: .6rem;">
+              <iframe
+                src="https://www.youtube.com/embed/{{ r.youtube }}"
+                title="{{ r.title }}"
+                frameborder="0"
+                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+                loading="lazy"></iframe>
+              <div class="bmat-video-play"><span></span></div>
+            </div>
+            <a class="bmat-chip-link" href="https://www.youtube.com/watch?v={{ r.youtube }}" target="_blank" rel="noopener">
+              Watch on YouTube <span aria-hidden="true">→</span>
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Resources Grid + Premium Videos -->
+<div class="mb-2">
+  <h5 class="fw-bold mb-2">Resources</h5>
+  <div class="text-muted mb-3">Ordered to match what seems most useful right now.</div>
+
+  {% if plan.resources and plan.resources|length > 0 %}
+    <div class="row g-4">
+      {% for r in plan.resources %}
+      <div class="col-lg-6 col-md-6 col-12">
+        <div class="card h-100 bmat-resource-card">
+          <div class="card-body">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+              <div>
+                <h6 class="fw-semibold mb-1">{{ r.title }}</h6>
+                <div class="small text-muted">{{ r.what }}</div>
+                <div class="small text-muted mt-1">{{ r.when }}</div>
+              </div>
+              <span class="badge text-bg-light text-dark align-self-start">{{ r.tag|capitalize }}</span>
+            </div>
+
+            {% if r.youtube %}
+              <div class="mt-3">
+                <div class="bmat-video-wrap ratio" style="--bs-aspect-ratio: 56%; margin-bottom: .6rem;">
+                  <iframe
+                    src="https://www.youtube.com/embed/{{ r.youtube }}"
+                    title="{{ r.title }}"
+                    frameborder="0"
+                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                    loading="lazy"></iframe>
+                  <div class="bmat-video-play"><span></span></div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                  <a class="bmat-chip-link" href="https://www.youtube.com/watch?v={{ r.youtube }}" target="_blank" rel="noopener">
+                    Watch on YouTube <span aria-hidden="true">→</span>
+                  </a>
+                  <a class="bmat-chip-link" href="https://img.youtube.com/vi/{{ r.youtube }}/hqdefault.jpg" target="_blank" rel="noopener">
+                    Thumbnail <span aria-hidden="true">↗</span>
+                  </a>
+                </div>
+              </div>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-muted">No resources matched right now. Try a check-in or complete PHQ-9 / GAD-7 again.</div>
+  {% endif %}
+</div>
+
+{% if show_safety %}
+<hr class="my-3">
+<div class="alert alert-danger">
+  <div class="fw-bold mb-1">You deserve support right now.</div>
+  If you feel unsafe or might hurt yourself, call/text <b>988</b> (US) or your local emergency number.
+</div>
+{% endif %}
+
+{% endblock %}

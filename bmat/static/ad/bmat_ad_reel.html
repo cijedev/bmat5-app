@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BMW — 12s ad reel (record me)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <!--
+    RECORD THIS AS YOUR 10–15s AD
+    1. Run the app (run_dev.bat) OR open this file in Chrome/Edge (file:// is OK).
+    2. Fullscreen: F11
+    3. Windows: Win+G → Capture → record this window (or OBS Display Capture).
+    4. One loop = 12s. Trim to ~10–15s in your editor, or slow to 0.85× for ~14s.
+    Direct URL when Flask is running:
+    http://127.0.0.1:5000/static/ad/bmat_ad_reel.html
+
+    Automated video (Playwright): from repo root run
+    python scripts/render_ad_videos.py
+    → bmat/static/videos/bmat_ad_reel.webm (and .mp4 if ffmpeg is on PATH)
+  -->
+  <style>
+    :root {
+      --b1: #ff3d8d;
+      --b2: #ff9f1c;
+      --b3: #2ec4b6;
+      --b4: #3a86ff;
+      /* One full loop length in seconds (12 or 15 works with the same scene timing). */
+      --ad-sec: 12;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: #0a0814;
+      font-family: Inter, system-ui, sans-serif;
+      overflow: hidden;
+    }
+
+    .stage {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(100% 80% at 50% -15%, rgba(255, 159, 28, 0.22), transparent 55%),
+        radial-gradient(70% 50% at 95% 40%, rgba(58, 134, 255, 0.18), transparent 50%),
+        radial-gradient(60% 45% at 5% 70%, rgba(255, 61, 141, 0.12), transparent 45%),
+        linear-gradient(165deg, #120c22 0%, #0a0814 50%, #0d1528 100%);
+      animation: bgShift calc(var(--ad-sec) * 1s) ease-in-out infinite;
+    }
+
+    @keyframes bgShift {
+      0%, 100% { filter: hue-rotate(0deg) saturate(1); }
+      50% { filter: hue-rotate(12deg) saturate(1.08); }
+    }
+
+    /* 16:9 safe area for social / YouTube Shorts */
+    .frame {
+      position: relative;
+      width: min(96vw, calc(96vh * 16 / 9));
+      height: min(96vh, calc(96vw * 9 / 16));
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.4),
+        0 24px 80px rgba(0, 0, 0, 0.55);
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(20px);
+    }
+
+    .bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--b1), var(--b2), var(--b3), var(--b4));
+      transform-origin: left;
+      animation: barProg calc(var(--ad-sec) * 1s) linear infinite;
+    }
+
+    @keyframes barProg {
+      from { transform: scaleX(0); }
+      to { transform: scaleX(1); }
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 6% 8%;
+      opacity: 0;
+    }
+
+    .logo {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      margin-bottom: 1.25rem;
+      background: linear-gradient(135deg, var(--b1), var(--b2), var(--b3), var(--b4));
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+      animation: pulse calc(var(--ad-sec) * 1s) ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 20%, 100% { transform: scale(1); }
+      10% { transform: scale(1.05); }
+    }
+
+    h1 {
+      font-size: clamp(1.75rem, 5vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #fff;
+      line-height: 1.1;
+      text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .sub {
+      margin-top: 0.75rem;
+      font-size: clamp(1rem, 2.8vw, 1.45rem);
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.82);
+      max-width: 28ch;
+      line-height: 1.35;
+    }
+
+    .pill {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: rgba(255, 174, 0, 0.25);
+      border: 1px solid rgba(255, 200, 100, 0.45);
+      color: #ffe6b0;
+    }
+
+    .bullets {
+      margin-top: 1.25rem;
+      text-align: left;
+      display: inline-block;
+      font-size: clamp(0.95rem, 2.2vw, 1.2rem);
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.88);
+      line-height: 1.65;
+    }
+
+    .bullets li {
+      list-style: none;
+      margin: 0.35rem 0;
+      padding-left: 1.2rem;
+      position: relative;
+    }
+
+    .bullets li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--b2), var(--b3));
+    }
+
+    /* 5 scenes × 20% timeline = 12s total */
+    @keyframes scene1 {
+      0%, 2% { opacity: 0; transform: translateY(12px); }
+      4%, 16% { opacity: 1; transform: translateY(0); }
+      19%, 100% { opacity: 0; transform: translateY(-8px); }
+    }
+    @keyframes scene2 {
+      0%, 19% { opacity: 0; transform: translateY(12px); }
+      21%, 36% { opacity: 1; transform: translateY(0); }
+      39%, 100% { opacity: 0; transform: translateY(-8px); }
+    }
+    @keyframes scene3 {
+      0%, 39% { opacity: 0; transform: translateY(12px); }
+      41%, 56% { opacity: 1; transform: translateY(0); }
+      59%, 100% { opacity: 0; transform: translateY(-8px); }
+    }
+    @keyframes scene4 {
+      0%, 59% { opacity: 0; transform: translateY(12px); }
+      61%, 76% { opacity: 1; transform: translateY(0); }
+      79%, 100% { opacity: 0; transform: translateY(-8px); }
+    }
+    @keyframes scene5 {
+      0%, 79% { opacity: 0; transform: translateY(12px) scale(0.98); }
+      81%, 96% { opacity: 1; transform: translateY(0) scale(1); }
+      99%, 100% { opacity: 0; transform: translateY(-6px) scale(1); }
+    }
+
+    .s1 { animation: scene1 calc(var(--ad-sec) * 1s) ease-in-out infinite; }
+    .s2 { animation: scene2 calc(var(--ad-sec) * 1s) ease-in-out infinite; }
+    .s3 { animation: scene3 calc(var(--ad-sec) * 1s) ease-in-out infinite; }
+    .s4 { animation: scene4 calc(var(--ad-sec) * 1s) ease-in-out infinite; }
+    .s5 { animation: scene5 calc(var(--ad-sec) * 1s) ease-in-out infinite; }
+
+    .cta {
+      margin-top: 1rem;
+      font-size: clamp(1.1rem, 3vw, 1.5rem);
+      font-weight: 800;
+      background: linear-gradient(90deg, #ffd56a, #ffae00);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hint {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.35);
+      pointer-events: none;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="frame">
+      <div class="bar" aria-hidden="true"></div>
+      <div class="scene s1">
+        <div class="logo" aria-hidden="true"></div>
+        <h1>BMW</h1>
+        <p class="sub">Better Mental Wellness — support that meets you where you are.</p>
+        <span class="pill">Version 6.5</span>
+      </div>
+      <div class="scene s2">
+        <h1>Check in with yourself</h1>
+        <p class="sub">Mood, stress, sleep — one gentle rhythm at a time.</p>
+        <ul class="bullets">
+          <li>Daily check-ins &amp; wellness score</li>
+          <li>Pattern insights you can use</li>
+        </ul>
+      </div>
+      <div class="scene s3">
+        <h1>Evidence-informed screenings</h1>
+        <p class="sub">PHQ-9 and GAD-7 with clear scores — plus safety-aware messaging.</p>
+        <ul class="bullets">
+          <li>History &amp; trends at a glance</li>
+        </ul>
+      </div>
+      <div class="scene s4">
+        <h1>An adaptive care plan</h1>
+        <p class="sub">Tiny actions, curated resources, and streaks that celebrate consistency.</p>
+        <ul class="bullets">
+          <li>Personalized focus &amp; quick wins</li>
+          <li>Learns from what you complete</li>
+        </ul>
+      </div>
+      <div class="scene s5">
+        <h1>Built with ethics in mind</h1>
+        <p class="sub">Admin tools that default to masked data, exports you control, and an acknowledgement gate.</p>
+        <p class="cta">Your wellness. Your pace.</p>
+        <span class="pill" style="margin-top:1.25rem">BMW</span>
+      </div>
+    </div>
+  </div>
+  <p class="hint">Fullscreen (F11) · Record one 12s loop · Trim in editor for 10–15s</p>
+</body>
+</html>

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+  <div>
+    <h2 class="fw-bold mb-1">Cultural fit</h2>
+    <div class="text-muted">
+      Phase 7 — tune language tone and optional representation picks. Care-plan safety rules are unchanged.
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="bmat-mini-card h-100">
+      <div class="small text-muted mb-1">Today's affirmation</div>
+      <p class="mb-0 fw-semibold">{{ affirmation }}</p>
+      <p class="text-white-50 small mt-2 mb-0">Rotates daily — same for you all day, stable across refreshes.</p>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="bmat-mini-card h-100">
+      <div class="small text-muted mb-1">Active tone</div>
+      <div class="fw-semibold">{{ plan.cultural.tone_label if plan.cultural else "Warm & clear" }}</div>
+      <p class="text-white-50 small mt-2 mb-0">Affects focus labels, “Recommended for you,” streak notes, and optional hints on tiny actions.</p>
+    </div>
+  </div>
+</div>
+
+<form method="post" class="vstack gap-4">
+  {{ form.hidden_tag() }}
+
+  <div class="bmat-mini-card">
+    {{ form.tone_preset.label(class="form-label fw-bold mb-2 d-block") }}
+    <div class="text-muted small mb-2">Choose how BMW speaks to you — not what you deserve to hear clinically.</div>
+    {{ form.tone_preset(class="form-select bmat-select") }}
+  </div>
+
+  <div class="bmat-mini-card">
+    <div class="form-check">
+      {{ form.highlight_representation(class="form-check-input") }}
+      {{ form.highlight_representation.label(class="form-check-label") }}
+    </div>
+    <div class="text-muted small mt-2 mb-0">
+      When on, your <a href="{{ url_for('main.careplan') }}" class="link-light fw-semibold">care plan</a> shows an optional “Diverse voices & wellness media” strip with curated videos for anyone (you can turn this off anytime).
+    </div>
+  </div>
+
+  {{ form.submit(class="btn btn-warning btn-lg align-self-start") }}
+</form>
+
+{% if representation and representation|length > 0 %}
+<div class="mt-4">
+  <h3 class="h6 fw-bold mb-2">Diverse voices & wellness media (preview)</h3>
+  <p class="text-muted small mb-3">These appear on your care plan when the option above is on.</p>
+  <div class="row g-3">
+    {% for r in representation %}
+    <div class="col-md-6">
+      <div class="bmat-mini-card h-100">
+        <div class="fw-semibold mb-1">{{ r.title }}</div>
+        <div class="small text-muted">{{ r.what }}</div>
+        {% if r.youtube %}
+        <a class="btn btn-sm btn-outline-light mt-2" href="https://www.youtube.com/watch?v={{ r.youtube }}" target="_blank" rel="noopener">Watch</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="text-white-50 small mt-4">
+  Warren Model slides stay on <a href="{{ url_for('main.about') }}#warren-slides" class="link-light">About BMW</a>. Topic tuning lives under
+  <a href="{{ url_for('main.personal_profile') }}" class="link-light">Personal profile</a> → Personalization.
+</div>
+{% endblock %}

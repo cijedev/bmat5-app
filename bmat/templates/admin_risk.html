@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div>
+    <h2 class="fw-bold mb-1">Risk flags</h2>
+    <div class="text-muted">Emails are masked by default. Reveal only when operationally necessary.</div>
+  </div>
+  <div>
+    {% if reveal %}
+      <a class="btn btn-outline-warning" href="{{ url_for('main.admin_risk') }}">Hide emails</a>
+    {% else %}
+      <a class="btn btn-outline-warning"
+         href="{{ url_for('main.admin_risk', reveal='1', confirm='1') }}"
+         onclick="return confirm('Reveal full email addresses for risk flags? Use only when needed.');">
+        Reveal emails (confirm)
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="table-responsive mt-3">
+  <table class="table table-sm table-hover align-middle">
+    <thead><tr><th>User</th><th>Email</th><th>Kind</th><th>Score</th><th>Severity</th><th>Item9</th><th>Date</th></tr></thead>
+    <tbody>
+      {% for a in flags %}
+      <tr>
+        <td>{{ a.user_id }}</td>
+        <td>{{ a.email }}</td>
+        <td>{{ a.kind }}</td>
+        <td class="fw-bold">{{ a.total_score }}</td>
+        <td>{{ a.severity }}</td>
+        <td>{{ a.item9_score if a.item9_score is not none else "" }}</td>
+        <td class="text-muted small">{{ a.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+      </tr>
+      {% endfor %}
+      {% if not flags %}
+      <tr><td colspan="7" class="text-muted">No flags found.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

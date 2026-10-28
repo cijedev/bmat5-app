@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="fw-bold mb-3">Create account</h2>
+<form method="post" class="vstack gap-3">
+  {{ form.hidden_tag() }}
+  <div>
+    {{ form.display_name.label(class="form-label") }}
+    {{ form.display_name(class="form-control form-control-lg", placeholder="Your name") }}
+  </div>
+  <div>
+    {{ form.email.label(class="form-label") }}
+    {{ form.email(class="form-control form-control-lg", placeholder="you@example.com") }}
+  </div>
+  <div>
+    {{ form.password.label(class="form-label") }}
+    {{ form.password(class="form-control form-control-lg", placeholder="10+ characters") }}
+  </div>
+  <div class="form-check">
+    {{ form.age_confirm(class="form-check-input" + (" is-invalid" if form.age_confirm.errors else ""), id="ageConfirm", required=True) }}
+    {{ form.age_confirm.label(class="form-check-label fw-semibold", for="ageConfirm") }}
+    <div class="small text-white-50">BMW is for adults. By creating an account you agree to our <a class="link-light" href="{{ url_for('main.privacy') }}">Privacy Policy</a>.</div>
+    {% if form.age_confirm.errors %}<div class="invalid-feedback d-block">{{ form.age_confirm.errors[0] }}</div>{% endif %}
+  </div>
+  {{ form.submit(class="btn btn-warning btn-lg") }}
+</form>
+<div class="text-muted mt-3">Already have an account? <a href="{{ url_for('main.login') }}">Log in</a>.</div>
+{% endblock %}

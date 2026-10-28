@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div>
+    <h2 class="fw-bold mb-1">Add user</h2>
+    <div class="text-muted">Create an account for someone on your team. Minimum password length matches public sign-up (10 characters).</div>
+  </div>
+  <a class="btn btn-outline-light" href="{{ url_for('main.admin_users') }}">Back to users</a>
+</div>
+
+<form method="post" class="mt-4 vstack gap-3" style="max-width: 28rem;">
+  {{ form.hidden_tag() }}
+  <div>
+    {{ form.display_name.label(class="form-label fw-semibold") }}
+    {{ form.display_name(class="form-control") }}
+  </div>
+  <div>
+    {{ form.email.label(class="form-label fw-semibold") }}
+    {{ form.email(class="form-control", autocomplete="off") }}
+  </div>
+  <div>
+    {{ form.password.label(class="form-label fw-semibold") }}
+    {{ form.password(class="form-control", autocomplete="new-password") }}
+  </div>
+  <div>
+    {{ form.role.label(class="form-label fw-semibold") }}
+    {{ form.role(class="form-select") }}
+    <div class="form-text">Choose <strong>Administrator</strong> only for trusted staff who should access the admin dashboard.</div>
+  </div>
+  {{ form.submit(class="btn btn-warning") }}
+</form>
+{% endblock %}

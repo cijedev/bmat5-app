@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bmat-mini-card border border-danger border-opacity-50">
+  <h2 class="fw-bold mb-2 text-warning">You are not alone — help is available now</h2>
+  <p class="mb-3">
+    Your PHQ-9 responses included Item 9 (thoughts of self-harm or that you would be better off dead)
+    with a score greater than zero. This screen is shown before your history so you can reach support first.
+  </p>
+  <div class="alert alert-danger" role="alert">
+    <div class="fw-bold mb-2">If you are in immediate danger, call emergency services.</div>
+    <ul class="mb-0">
+      <li><b>US:</b> Call or text <b>988</b> (Suicide &amp; Crisis Lifeline) — 24/7</li>
+      <li><b>US emergency:</b> Call <b>911</b></li>
+      <li>Outside the US: use your local emergency number or crisis line</li>
+    </ul>
+  </div>
+  <p class="text-muted small mb-4">
+    BMW is a screening tool, not a diagnosis or emergency service. Your PHQ-9 (score {{ total }},
+    {{ severity }}{% if item9_score is defined %}; item 9 = {{ item9_score }}{% endif %}) was saved.
+  </p>
+  <a class="btn btn-warning btn-lg" href="{{ url_for('main.history') }}">Continue to my history</a>
+  <a class="btn btn-outline-light btn-lg ms-2" href="{{ url_for('main.dashboard') }}">Back to home</a>
+</div>
+{% endblock %}

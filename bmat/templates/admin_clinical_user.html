@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+  <div>
+    <h2 class="fw-bold mb-1">Clinical — {{ u.display_name }}</h2>
+    <div class="text-muted">{{ u.email }} • User id {{ u.id }}</div>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-warning" href="{{ url_for('main.admin_clinical_report_pdf', user_id=u.id) }}">Download PDF report</a>
+    <a class="btn btn-outline-light" href="{{ url_for('main.admin_clinical') }}">Back to clinical</a>
+  </div>
+</div>
+
+<div class="row g-3 mt-2">
+  <div class="col-md-4"><div class="bmat-kpi"><div class="small text-muted">Wellness index</div><div class="fs-4 fw-bold">{{ state.wellness_score }}</div><div class="small">{{ state.wellness_label }}</div></div></div>
+  <div class="col-md-4"><div class="bmat-kpi"><div class="small text-muted">Action streak</div><div class="fs-4 fw-bold">{{ state.streak_days }}</div><div class="small">days</div></div></div>
+  <div class="col-md-4"><div class="bmat-kpi"><div class="small text-muted">Actions (last 7d)</div><div class="fs-4 fw-bold">{{ state.last7_count }}</div></div></div>
+</div>
+
+{% if state.insights %}
+<div class="bmat-mini-card mt-3 mb-3">
+  <h5 class="fw-bold mb-2">Pattern notes (automated)</h5>
+  {% for insight in state.insights %}
+  <div class="d-flex gap-2 mb-2"><span class="bmat-dot-sm"></span><div>{{ insight }}</div></div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="row g-4 mb-3">
+  <div class="col-lg-6">
+    <div class="bmat-mini-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="fw-bold mb-0">Assessment trends</h5>
+        <span class="small text-muted">PHQ-9 / GAD-7</span>
+      </div>
+      <div class="bmat-chart-wrap">
+        <canvas id="clinicalAssessmentChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="bmat-mini-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="fw-bold mb-0">Check-in trends</h5>
+        <span class="small text-muted">Mood / Stress / Sleep</span>
+      </div>
+      <div class="bmat-chart-wrap">
+        <canvas id="clinicalCheckinChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bmat-mini-card mb-4">
+  <h5 class="fw-bold mb-3">Risk / follow-up notes (internal)</h5>
+  <p class="text-muted small mb-3">Not visible to the participant. Use for care coordination; add <code class="text-warning">?pii=1</code> when exporting <code class="text-warning">clinical_review</code> CSV if authorized.</p>
+
+  <form method="post" action="{{ url_for('main.admin_clinical_review_add', user_id=u.id) }}" class="mb-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label class="form-label fw-semibold" for="clinicalNote">New note</label>
+    <textarea name="note" id="clinicalNote" class="form-control mb-2" rows="3" placeholder="e.g. Discussed safety plan with supervisor…"></textarea>
+    <button type="submit" class="btn btn-warning btn-sm">Save note</button>
+  </form>
+
+  {% if reviews %}
+  <ul class="list-unstyled mb-0">
+    {% for r in reviews %}
+    <li class="border-bottom border-white border-opacity-10 py-3{% if loop.last %} border-0{% endif %}">
+      <div class="d-flex flex-wrap justify-content-between gap-2">
+        <div class="small text-muted">{{ r.created_at.strftime("%Y-%m-%d %H:%M") }}
+          {% if r.admin_user_id %}
+            {% set adm = review_admins.get(r.admin_user_id) %}
+            {% if adm %} • {{ adm.display_name }}{% endif %}
+          {% else %}
+            • System
+          {% endif %}
+          {% if r.review_type == 'escalation' %}<span class="badge text-bg-danger ms-1">Escalation{% if r.reason_code %} · {{ r.reason_code }}{% endif %}</span>{% endif %}
+          {% if r.resolved_at %}<span class="badge text-bg-light text-dark ms-1">Resolved {{ r.resolved_at.strftime("%Y-%m-%d") }}</span>{% endif %}
+        </div>
+        {% if not r.resolved_at %}
+        <form method="post" action="{{ url_for('main.admin_clinical_review_resolve', review_id=r.id) }}" class="d-inline" onsubmit="return confirm('Mark this note resolved?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <button type="submit" class="btn btn-sm btn-outline-light">Mark resolved</button>
+        </form>
+        {% endif %}
+      </div>
+      <div class="mt-2">{{ r.note }}</div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="text-muted">No review notes yet.</div>
+  {% endif %}
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <h5 class="fw-bold">Assessments</h5>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle">
+        <thead><tr><th>Kind</th><th>Score</th><th>Severity</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for a in state.assessments %}
+          <tr>
+            <td>{{ a.kind }}</td>
+            <td class="fw-bold">{{ a.total_score }}</td>
+            <td>{{ a.severity }}</td>
+            <td class="text-muted small">{{ a.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+          </tr>
+          {% endfor %}
+          {% if not state.assessments %}
+          <tr><td colspan="4" class="text-muted">No assessments.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <h5 class="fw-bold">Check-ins</h5>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle">
+        <thead><tr><th>Mood</th><th>Stress</th><th>Sleep</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for c in state.checkins %}
+          <tr>
+            <td class="fw-bold">{{ c.mood }}</td>
+            <td>{{ c.stress }}</td>
+            <td>{{ "%.1f"|format(c.sleep_hours) }}</td>
+            <td class="text-muted small">{{ c.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+          </tr>
+          {% endfor %}
+          {% if not state.checkins %}
+          <tr><td colspan="4" class="text-muted">No check-ins.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+  const assessments = [
+    {% for a in state.assessments|reverse %}
+      { kind: "{{ a.kind }}", score: {{ a.total_score }}, label: "{{ a.created_at.strftime('%m/%d') }}" }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+  const checkins = [
+    {% for c in state.checkins|reverse %}
+      { mood: {{ c.mood }}, stress: {{ c.stress }}, sleep: {{ "%.1f"|format(c.sleep_hours) }}, label: "{{ c.created_at.strftime('%m/%d') }}" }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+  const textColor = "rgba(255,255,255,0.88)";
+  const gridColor = "rgba(255,255,255,0.10)";
+
+  function buildLineChart(id, labels, datasets) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    new Chart(el, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { labels: { color: textColor } } },
+        scales: {
+          x: { ticks: { color: textColor }, grid: { color: gridColor } },
+          y: { ticks: { color: textColor }, grid: { color: gridColor } }
+        }
+      }
+    });
+  }
+
+  if (assessments.length > 0) {
+    const labels = assessments.map(x => x.label);
+    const phqData = assessments.map(x => x.kind === "PHQ9" ? x.score : null);
+    const gadData = assessments.map(x => x.kind === "GAD7" ? x.score : null);
+    buildLineChart("clinicalAssessmentChart", labels, [
+      { label: "PHQ-9", data: phqData, spanGaps: true, borderColor: bmatChartColor.c2, backgroundColor: bmatChartColor.c2a, tension: 0.35 },
+      { label: "GAD-7", data: gadData, spanGaps: true, borderColor: bmatChartColor.c4, backgroundColor: bmatChartColor.c4a, tension: 0.35 }
+    ]);
+  }
+  if (checkins.length > 0) {
+    const labels = checkins.map(x => x.label);
+    buildLineChart("clinicalCheckinChart", labels, [
+      { label: "Mood", data: checkins.map(x => x.mood), borderColor: bmatChartColor.c3, backgroundColor: bmatChartColor.c3a, tension: 0.35 },
+      { label: "Stress", data: checkins.map(x => x.stress), borderColor: bmatChartColor.c1, backgroundColor: bmatChartColor.c1a, tension: 0.35 },
+      { label: "Sleep", data: checkins.map(x => x.sleep), borderColor: bmatChartColor.gold, backgroundColor: bmatChartColor.golda, tension: 0.35 }
+    ]);
+  }
+</script>
+{% endblock %}

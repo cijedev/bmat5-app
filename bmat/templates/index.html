@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+{% if landing_hero_video %}
+<div class="bmat-landing-hero position-relative" id="bmatLandingHero">
+  <video
+    id="bmatLandingVideo"
+    class="bmat-landing-video-bg"
+    autoplay
+    muted
+    loop
+    playsinline
+    preload="auto"
+    webkit-playsinline
+    disablePictureInPicture
+    aria-hidden="true"
+    src="{{ url_for('main.landing_hero_media') }}"
+  ></video>
+  <div class="bmat-landing-scrim" aria-hidden="true"></div>
+  <div class="bmat-landing-inner text-center py-5 px-4">
+    <h1 class="display-6 fw-bold text-white bmat-landing-title mb-3">Welcome to {{ APP_NAME }}</h1>
+    <p class="lead bmat-landing-lead mb-2">A vibrant, uplifting dashboard for check-ins, screenings, and care planning.</p>
+    <p class="small bmat-landing-hint mb-4">Preview plays muted in the background.</p>
+    <div class="d-flex flex-wrap justify-content-center gap-2 mt-2">
+      <a class="btn btn-warning btn-lg" href="{{ url_for('main.signup') }}">Create account</a>
+      <a class="btn btn-outline-light btn-lg" href="{{ url_for('main.login') }}">Log in</a>
+    </div>
+
+<div id="bmwInstallCard" class="bmat-mini-card mt-4 mx-auto text-start" style="max-width: 36rem;" hidden>
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <div>
+      <div class="fw-bold d-flex align-items-center gap-2">
+        <span class="material-symbols-rounded" aria-hidden="true">install_mobile</span>
+        <span>Install to Home Screen</span>
+      </div>
+      <div class="small text-white-50 mt-1" id="bmwInstallHint">Add Better Mental Wellness to your home screen for one-tap access.</div>
+    </div>
+    <button type="button" class="btn btn-sm btn-warning" id="bmwInstallBtn" hidden>Install to Home Screen</button>
+  </div>
+</div>
+  </div>
+</div>
+<script>
+(function () {
+  var wrap = document.getElementById("bmatLandingHero");
+  var v = document.getElementById("bmatLandingVideo");
+  if (!v || !wrap) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  v.muted = true;
+  v.defaultMuted = true;
+  v.setAttribute("muted", "");
+
+  v.addEventListener("error", function () {
+    wrap.classList.add("bmat-landing-video-failed");
+    var e = v.error;
+    if (e && console.warn) {
+      console.warn(
+        "BMW landing video: decode/network error (code " + e.code + "). " +
+        "Put bmat_ad_flask.mp4 in static/videos/ or run: python scripts/transcode_bmat_ad_flask.py (needs ffmpeg)"
+      );
+    }
+  });
+
+  function tryPlay() {
+    var p = v.play();
+    if (p && typeof p.then === "function") {
+      p.catch(function () {
+        v.addEventListener(
+          "canplay",
+          function once() {
+            v.play().catch(function () {});
+            v.removeEventListener("canplay", once);
+          },
+          { once: true }
+        );
+      });
+    }
+  }
+
+  v.addEventListener(
+    "loadeddata",
+    function () {
+      tryPlay();
+    },
+    { once: true }
+  );
+  tryPlay();
+  if (v.readyState < 2) {
+    v.load();
+  }
+})();
+</script>
+{% else %}
+<div class="text-center py-4">
+  <h1 class="display-6 fw-bold">Welcome to {{ APP_NAME }}</h1>
+  <p class="lead text-muted">A vibrant, uplifting dashboard for check-ins, screenings, and care planning.</p>
+  <div class="d-flex justify-content-center gap-2 mt-3">
+    <a class="btn btn-warning btn-lg" href="{{ url_for('main.signup') }}">Create account</a>
+    <a class="btn btn-outline-light btn-lg" href="{{ url_for('main.login') }}">Log in</a>
+  </div>
+
+<div id="bmwInstallCard" class="bmat-mini-card mt-4 mx-auto text-start" style="max-width: 36rem;" hidden>
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <div>
+      <div class="fw-bold d-flex align-items-center gap-2">
+        <span class="material-symbols-rounded" aria-hidden="true">install_mobile</span>
+        <span>Install to Home Screen</span>
+      </div>
+      <div class="small text-white-50 mt-1" id="bmwInstallHint">Add Better Mental Wellness to your home screen for one-tap access.</div>
+    </div>
+    <button type="button" class="btn btn-sm btn-warning" id="bmwInstallBtn" hidden>Install to Home Screen</button>
+  </div>
+</div>
+</div>
+{% endif %}
+{% endblock %}

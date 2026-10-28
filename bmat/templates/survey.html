@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bmat-survey">
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div>
+    <p class="mb-1"><a class="link-light small" href="{{ url_for('main.screenings') }}">← All screenings</a></p>
+    <h2 class="fw-bold mb-1">{{ title }} Screening</h2>
+    <div class="text-muted">Over the last <b>2 weeks</b>, how often have you been bothered by the following problems?</div>
+  </div>
+  <div class="bmat-kpi-inline">
+    <div class="small text-muted">Score</div>
+    <div class="fs-4 fw-bold">{{ total }}</div>
+    <div class="small">{{ severity }}</div>
+  </div>
+</div>
+
+{% if show_safety %}
+<div class="alert alert-danger mt-3">
+  <b>Safety note:</b> If you’re in danger or thinking about harming yourself, please get support now.
+  Call/text <b>988</b> (US) • If immediate danger call <b>911</b>.
+</div>
+{% endif %}
+
+<form method="post" class="vstack gap-3 mt-3">
+  {{ form.hidden_tag() }}
+  {% for name, field in form._fields.items() %}
+    {% if name.startswith('q') %}
+    <div class="bmat-question">
+      <div class="fw-semibold">{{ loop.index }}. {{ field.label.text }}</div>
+      <div class="mt-2 d-flex flex-wrap gap-2">
+        {% for sub in field %}
+          <div class="form-check form-check-inline">
+            {{ sub(class="form-check-input") }}
+            <label class="form-check-label">{{ sub.label.text }}</label>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  {% endfor %}
+  {{ form.submit(class="btn btn-warning btn-lg") }}
+</form>
+</div>
+{% endblock %}

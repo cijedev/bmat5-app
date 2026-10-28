@@ -1,0 +1,4 @@
+# Optional: regenerate bmat/static/videos/bmat_demo.webm
+#   playwright install chromium
+-r requirements.txt
+playwright>=1.49.0

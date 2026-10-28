@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div>
+    <h2 class="fw-bold mb-1">Private Session</h2>
+    <div class="text-muted">Stream one app window/tab or your full screen. Viewers join with a room code.</div>
+  </div>
+</div>
+
+<div class="row g-3 mt-2">
+  <div class="col-lg-5">
+    <div class="bmat-mini-card">
+      <h5 class="fw-bold mb-2">Start sharing</h5>
+
+      <div class="mb-2">
+        <label class="form-label">Room code</label>
+        <input id="room" class="form-control form-control-lg" placeholder="Generated room code" value="{{ suggested_room }}">
+        <div class="form-text text-white-50">A random code is pre-filled. Share it only with intended viewers. Avoid short/guessable codes.</div>
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Share mode</label>
+        <select id="mode" class="form-select form-select-lg">
+          <option value="window">One app window</option>
+          <option value="browser">One browser tab</option>
+          <option value="monitor">Whole screen</option>
+        </select>
+        <div class="form-text text-white-50">Your browser will still show a picker — you choose exactly what gets shared.</div>
+      </div>
+
+      <div class="d-flex gap-2 mt-3">
+        <button id="startBtn" class="btn btn-warning btn-lg">Start stream</button>
+        <button id="stopBtn" class="btn btn-outline-light btn-lg" disabled>Stop</button>
+      </div>
+
+      <div class="mt-3 small text-white-50">
+        <b>Privacy:</b> Don’t share sensitive screens. Viewers can only see what you select in the browser picker.
+      </div>
+    </div>
+
+    <div class="bmat-mini-card mt-3">
+      <h5 class="fw-bold mb-2">Join as viewer</h5>
+      <div class="mb-2">
+        <label class="form-label">Room code</label>
+        <input id="joinRoom" class="form-control form-control-lg" placeholder="Enter room code" value="">
+      </div>
+      <button id="joinBtn" class="btn btn-outline-light btn-lg">Join stream</button>
+      <div class="form-text text-white-50">If a stream is live in that room, you’ll see it on the right.</div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="bmat-mini-card">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="fw-bold">Live preview</div>
+        <span id="status" class="badge text-bg-light text-dark">Idle</span>
+      </div>
+      <div class="ratio ratio-16x9 mt-3">
+        <video id="video" autoplay playsinline controls muted style="border-radius:16px; background:#000;"></video>
+      </div>
+      <div class="small text-white-50 mt-2">
+        Tip: If you are the broadcaster, the preview is muted by default to prevent feedback.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+(() => {
+  const scriptRoot = {{ (request.script_root or '')|tojson }};
+  const socket = io({ path: (scriptRoot || '') + '/socket.io' });
+  const videoEl = document.getElementById('video');
+  const statusEl = document.getElementById('status');
+
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const joinBtn = document.getElementById('joinBtn');
+
+  const roomInput = document.getElementById('room');
+  const modeSel = document.getElementById('mode');
+  const joinRoomInput = document.getElementById('joinRoom');
+
+  let pc = null;
+  let localStream = null;
+  let role = null;   // 'broadcaster' | 'viewer'
+  let currentRoom = null;
+
+  const iceServers = [{ urls: "stun:stun.l.google.com:19302" }];
+
+  function setStatus(text, kind="light"){
+    statusEl.className = "badge text-bg-" + kind;
+    statusEl.textContent = text;
+  }
+
+  function makePC(){
+    pc = new RTCPeerConnection({ iceServers });
+    pc.onicecandidate = (e) => {
+      if (e.candidate && currentRoom){
+        socket.emit('webrtc_ice', { room: currentRoom, candidate: e.candidate });
+      }
+    };
+    pc.ontrack = (e) => {
+      if (role === 'viewer'){
+        videoEl.srcObject = e.streams[0];
+        videoEl.muted = false;
+      }
+    };
+    pc.onconnectionstatechange = () => {
+      if (!pc) return;
+      if (pc.connectionState === "connected") setStatus("Connected", "success");
+      if (pc.connectionState === "failed") setStatus("Failed", "danger");
+      if (pc.connectionState === "disconnected") setStatus("Disconnected", "warning");
+    };
+  }
+
+  async function startShare(){
+    role = 'broadcaster';
+    currentRoom = (roomInput.value || "").trim();
+    if (!currentRoom){ alert("Enter a room code."); return; }
+
+    makePC();
+
+    // NOTE: browsers always show a picker. We only *suggest* a surface type.
+    const mode = modeSel.value; // window | browser | monitor
+    const constraints = {
+      video: {
+        frameRate: 30,
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+        displaySurface: mode, // hint; some browsers ignore
+      },
+      audio: false
+    };
+
+    try{
+      localStream = await navigator.mediaDevices.getDisplayMedia(constraints);
+    }catch(err){
+      console.error(err);
+      alert("Screen share was cancelled or blocked by the browser.");
+      return;
+    }
+
+    videoEl.srcObject = localStream;
+    videoEl.muted = true;
+
+    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+    socket.emit('webrtc_join', { room: currentRoom, role: 'broadcaster' });
+    setStatus("Sharing… waiting for viewer", "warning");
+
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+
+    localStream.getVideoTracks()[0].addEventListener('ended', stopAll);
+  }
+
+  async function joinStream(){
+    role = 'viewer';
+    currentRoom = (joinRoomInput.value || "").trim();
+    if (!currentRoom){ alert("Enter a room code to join."); return; }
+
+    makePC();
+    socket.emit('webrtc_join', { room: currentRoom, role: 'viewer' });
+    setStatus("Joining…", "warning");
+  }
+
+  function stopAll(){
+    try{
+      if (localStream){
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
+      if (pc){
+        pc.close();
+        pc = null;
+      }
+    }catch(e){}
+
+    socket.emit('webrtc_leave', { room: currentRoom });
+    currentRoom = null;
+    role = null;
+
+    videoEl.srcObject = null;
+    setStatus("Idle", "light");
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+  }
+
+  startBtn.addEventListener('click', startShare);
+  stopBtn.addEventListener('click', stopAll);
+  joinBtn.addEventListener('click', joinStream);
+
+  socket.on('webrtc_ready', async () => {
+    if (!pc || role !== 'broadcaster') return;
+    try{
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      socket.emit('webrtc_offer', { room: currentRoom, sdp: offer });
+      setStatus("Offer sent", "warning");
+    }catch(err){
+      console.error(err);
+      setStatus("Error", "danger");
+    }
+  });
+
+  socket.on('webrtc_offer', async (payload) => {
+    if (!pc || role !== 'viewer') return;
+    try{
+      await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit('webrtc_answer', { room: currentRoom, sdp: answer });
+      setStatus("Answer sent", "warning");
+    }catch(err){
+      console.error(err);
+      setStatus("Error", "danger");
+    }
+  });
+
+  socket.on('webrtc_answer', async (payload) => {
+    if (!pc || role !== 'broadcaster') return;
+    try{
+      await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+      setStatus("Streaming live", "success");
+    }catch(err){
+      console.error(err);
+      setStatus("Error", "danger");
+    }
+  });
+
+  socket.on('webrtc_ice', async (payload) => {
+    if (!pc) return;
+    try{ await pc.addIceCandidate(payload.candidate); }
+    catch(err){ console.warn("ICE add failed", err); }
+  });
+
+  socket.on('webrtc_end', () => {
+    if (role === 'viewer'){
+      stopAll();
+      alert("Stream ended.");
+    }
+  });
+})();
+</script>
+{% endblock %}

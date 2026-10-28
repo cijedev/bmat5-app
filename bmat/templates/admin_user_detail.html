@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div>
+    <h2 class="fw-bold mb-1">User detail</h2>
+    <div class="text-muted">{{ u.display_name }} • {{ u.email }}</div>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-warning" href="{{ url_for('main.admin_clinical_user', user_id=u.id) }}">Clinical view</a>
+    <a class="btn btn-outline-light" href="{{ url_for('main.admin_users') }}">Back</a>
+  </div>
+</div>
+
+<hr class="border-white border-opacity-10 my-4">
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <h5 class="fw-bold">Assessments</h5>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle">
+        <thead><tr><th>Kind</th><th>Score</th><th>Severity</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for a in assessments %}
+          <tr>
+            <td>{{ a.kind }}</td>
+            <td class="fw-bold">{{ a.total_score }}</td>
+            <td>{{ a.severity }}</td>
+            <td class="text-muted small">{{ a.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+          </tr>
+          {% endfor %}
+          {% if not assessments %}
+          <tr><td colspan="4" class="text-muted">No assessments.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <h5 class="fw-bold">Check-ins</h5>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle">
+        <thead><tr><th>Mood</th><th>Stress</th><th>Sleep</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for c in checkins %}
+          <tr>
+            <td class="fw-bold">{{ c.mood }}</td>
+            <td>{{ c.stress }}</td>
+            <td>{{ "%.1f"|format(c.sleep_hours) }}</td>
+            <td class="text-muted small">{{ c.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+          </tr>
+          {% endfor %}
+          {% if not checkins %}
+          <tr><td colspan="4" class="text-muted">No check-ins.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div>
+    <h2 class="fw-bold mb-1">Trends & History</h2>
+    <div class="text-muted">Your recent scores, check-ins, and completed actions.</div>
+  </div>
+  <div class="d-flex gap-2">
+    <span class="badge text-bg-light text-dark">Wellness {{ wellness_score }}</span>
+    <span class="badge text-bg-warning text-dark">Streak {{ streak_days }}</span>
+  </div>
+</div>
+
+{% if insights %}
+<div class="bmat-mini-card mt-3 mb-4">
+  <h5 class="fw-bold">What your patterns suggest</h5>
+  {% for insight in insights %}
+    <div class="d-flex gap-2 mb-2">
+      <span class="bmat-dot-sm"></span>
+      <div>{{ insight }}</div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="bmat-mini-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="fw-bold mb-0">Assessment trends</h5>
+        <span class="small text-muted">PHQ-9 / GAD-7</span>
+      </div>
+      {% if assessments|length > 0 %}
+      <div class="bmat-chart-wrap">
+        <canvas id="assessmentChart"></canvas>
+      </div>
+      {% else %}
+      <div class="text-muted small py-4 px-2 text-center" style="min-height:180px;display:flex;align-items:center;justify-content:center;">
+        Complete PHQ-9 and GAD-7 screenings to see score trends here.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="bmat-mini-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="fw-bold mb-0">Check-in trends</h5>
+        <span class="small text-muted">Mood / Stress / Sleep</span>
+      </div>
+      {% if checkins|length > 0 %}
+      <div class="bmat-chart-wrap">
+        <canvas id="checkinChart"></canvas>
+      </div>
+      {% else %}
+      <div class="text-muted small py-4 px-2 text-center" style="min-height:180px;display:flex;align-items:center;justify-content:center;">
+        Log a few daily check-ins to see mood, stress, and sleep trends here.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="bmat-mini-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="fw-bold mb-0">Action completion activity</h5>
+        <span class="small text-muted">Last 7 days</span>
+      </div>
+      {% if completions|length > 0 %}
+      <div class="bmat-chart-wrap">
+        <canvas id="completionChart"></canvas>
+      </div>
+      {% else %}
+      <div class="text-muted small py-4 px-2 text-center" style="min-height:180px;display:flex;align-items:center;justify-content:center;">
+        Mark care-plan actions as done to see your activity here.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="row g-3">
+      <div class="col-6">
+        <div class="bmat-kpi">
+          <div class="small text-muted">Completed in last 7 days</div>
+          <div class="fs-3 fw-bold">{{ last7_count }}</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="bmat-kpi">
+          <div class="small text-muted">Wellness score</div>
+          <div class="fs-3 fw-bold">{{ wellness_score }}</div>
+          <div class="small">{{ wellness_label }}</div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="bmat-mini-card h-100">
+          <h5 class="fw-bold">Action progress</h5>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+              <thead>
+                <tr><th>Action</th><th>Date</th></tr>
+              </thead>
+              <tbody>
+                {% for c in completions[:12] %}
+                <tr>
+                  <td>{{ c.action_title }}</td>
+                  <td class="text-muted small">{{ c.completed_date.strftime("%Y-%m-%d") }}</td>
+                </tr>
+                {% endfor %}
+                {% if not completions %}
+                <tr><td colspan="2" class="text-muted">No completed actions yet.</td></tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <h5 class="fw-bold">Assessments</h5>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle">
+        <thead>
+          <tr><th>Kind</th><th>Score</th><th>Severity</th><th>Date</th></tr>
+        </thead>
+        <tbody>
+          {% for a in assessments %}
+          <tr>
+            <td>{{ a.kind }}</td>
+            <td class="fw-bold">{{ a.total_score }}</td>
+            <td>{{ a.severity }}</td>
+            <td class="text-muted small">{{ a.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+          </tr>
+          {% endfor %}
+          {% if not assessments %}
+          <tr><td colspan="4" class="text-muted">No assessments yet.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <h5 class="fw-bold">Check-ins</h5>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle">
+        <thead>
+          <tr><th>Mood</th><th>Stress</th><th>Sleep</th><th>Date</th></tr>
+        </thead>
+        <tbody>
+          {% for c in checkins %}
+          <tr>
+            <td class="fw-bold">{{ c.mood }}</td>
+            <td>{{ c.stress }}</td>
+            <td>{{ "%.1f"|format(c.sleep_hours) }}</td>
+            <td class="text-muted small">{{ c.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+          </tr>
+          {% endfor %}
+          {% if not checkins %}
+          <tr><td colspan="4" class="text-muted">No check-ins yet.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+  const assessments = [
+    {% for a in assessments|reverse %}
+      {
+        kind: "{{ a.kind }}",
+        score: {{ a.total_score }},
+        label: "{{ a.created_at.strftime('%m/%d') }}"
+      }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  const checkins = [
+    {% for c in checkins|reverse %}
+      {
+        mood: {{ c.mood }},
+        stress: {{ c.stress }},
+        sleep: {{ "%.1f"|format(c.sleep_hours) }},
+        label: "{{ c.created_at.strftime('%m/%d') }}"
+      }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  const completions = [
+    {% for c in completions %}
+      {
+        date: "{{ c.completed_date.strftime('%Y-%m-%d') }}",
+        label: "{{ c.completed_date.strftime('%m/%d') }}"
+      }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  const textColor = "rgba(255,255,255,0.88)";
+  const gridColor = "rgba(255,255,255,0.10)";
+
+  function buildLineChart(id, labels, datasets) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    new Chart(el, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { color: textColor } }
+        },
+        scales: {
+          x: {
+            ticks: { color: textColor },
+            grid: { color: gridColor }
+          },
+          y: {
+            ticks: { color: textColor },
+            grid: { color: gridColor }
+          }
+        }
+      }
+    });
+  }
+
+  if (assessments.length > 0) {
+    const labels = assessments.map(x => x.label);
+    const phqData = assessments.map(x => x.kind === "PHQ9" ? x.score : null);
+    const gadData = assessments.map(x => x.kind === "GAD7" ? x.score : null);
+
+    buildLineChart("assessmentChart", labels, [
+      {
+        label: "PHQ-9",
+        data: phqData,
+        spanGaps: true,
+        borderColor: bmatChartColor.c2,
+        backgroundColor: bmatChartColor.c2a,
+        tension: 0.35
+      },
+      {
+        label: "GAD-7",
+        data: gadData,
+        spanGaps: true,
+        borderColor: bmatChartColor.c4,
+        backgroundColor: bmatChartColor.c4a,
+        tension: 0.35
+      }
+    ]);
+  }
+
+  if (checkins.length > 0) {
+    const labels = checkins.map(x => x.label);
+    buildLineChart("checkinChart", labels, [
+      {
+        label: "Mood",
+        data: checkins.map(x => x.mood),
+        borderColor: bmatChartColor.c3,
+        backgroundColor: bmatChartColor.c3a,
+        tension: 0.35
+      },
+      {
+        label: "Stress",
+        data: checkins.map(x => x.stress),
+        borderColor: bmatChartColor.c1,
+        backgroundColor: bmatChartColor.c1a,
+        tension: 0.35
+      },
+      {
+        label: "Sleep",
+        data: checkins.map(x => x.sleep),
+        borderColor: bmatChartColor.gold,
+        backgroundColor: bmatChartColor.golda,
+        tension: 0.35
+      }
+    ]);
+  }
+
+  if (completions.length > 0) {
+    const counts = {};
+    completions.forEach(c => {
+      counts[c.label] = (counts[c.label] || 0) + 1;
+    });
+    const labels = Object.keys(counts).slice(-7);
+    const data = labels.map(l => counts[l]);
+
+    const el = document.getElementById("completionChart");
+    if (el) {
+      new Chart(el, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: "Completed actions",
+            data,
+            backgroundColor: "rgba(255, 174, 0, 0.5)",
+            borderColor: "rgba(255, 174, 0, 1)",
+            borderWidth: 1,
+            borderRadius: 10
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: textColor } }
+          },
+          scales: {
+            x: {
+              ticks: { color: textColor },
+              grid: { color: gridColor }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { color: textColor, precision: 0 },
+              grid: { color: gridColor }
+            }
+          }
+        }
+      });
+    }
+  }
+</script>
+{% endblock %}

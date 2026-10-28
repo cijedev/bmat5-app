@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div>
+    <h2 class="fw-bold mb-1">Clinic dashboard</h2>
+    <div class="text-muted">A friendlier clinical snapshot across participants. Use filters for urgency and open follow-up.</div>
+  </div>
+  <div class="d-flex gap-2">
+    {% if current_user.is_admin %}
+    <a class="btn btn-outline-light" href="{{ url_for('main.admin_risk') }}">Open risk flags</a>
+    <a class="btn btn-outline-light" href="{{ url_for('main.admin_overview') }}">Back to overview</a>
+    {% endif %}
+  </div>
+</div>
+
+{% set ns = namespace(open_reviews=0, item9=0, moderate_plus=0) %}
+{% for row in rows %}
+  {% if row.open_reviews %}{% set ns.open_reviews = ns.open_reviews + row.open_reviews %}{% endif %}
+  {% if row.item9 is not none and row.item9 > 0 %}{% set ns.item9 = ns.item9 + 1 %}{% endif %}
+  {% set phq_val = row.latest_phq.total_score if row.latest_phq else 0 %}
+  {% set gad_val = row.latest_gad.total_score if row.latest_gad else 0 %}
+  {% if phq_val >= 10 or gad_val >= 10 %}{% set ns.moderate_plus = ns.moderate_plus + 1 %}{% endif %}
+{% endfor %}
+
+<div class="row g-3 mt-2">
+  <div class="col-md-2">
+    <div class="bmat-kpi">
+      <div class="small text-muted">Participants</div>
+      <div class="fs-3 fw-bold">{{ rows|length }}</div>
+      <div class="small text-white-50">Active user accounts</div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="bmat-kpi">
+      <div class="small text-muted">Needs attention</div>
+      <div class="fs-3 fw-bold text-danger">{{ needs_attention_total|default(0) }}</div>
+      <div class="small text-white-50">Open escalations</div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="bmat-kpi">
+      <div class="small text-muted">Open reviews</div>
+      <div class="fs-3 fw-bold text-warning">{{ ns.open_reviews }}</div>
+      <div class="small text-white-50">Need follow-up</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="bmat-kpi">
+      <div class="small text-muted">Item 9 flagged</div>
+      <div class="fs-3 fw-bold text-danger">{{ ns.item9 }}</div>
+      <div class="small text-white-50">Latest PHQ-9</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="bmat-kpi">
+      <div class="small text-muted">PHQ/GAD >= 10</div>
+      <div class="fs-3 fw-bold">{{ ns.moderate_plus }}</div>
+      <div class="small text-white-50">Moderate+ symptoms</div>
+    </div>
+  </div>
+</div>
+
+<div class="bmat-mini-card mt-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-6">
+      <label class="form-label small text-muted mb-1" for="clinicalSearch">Search participant</label>
+      <input id="clinicalSearch" class="form-control" placeholder="Name..." />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small text-muted mb-1" for="clinicalFilter">Quick filter</label>
+      <select id="clinicalFilter" class="form-select">
+        <option value="all">All participants</option>
+        <option value="needs_attention">Needs attention</option>
+        <option value="item9">Item 9 flagged</option>
+        <option value="open_reviews">Open reviews</option>
+        <option value="moderate_plus">PHQ/GAD >= 10</option>
+      </select>
+    </div>
+    <div class="col-md-3 text-md-end">
+      <div class="small text-white-50">Rows shown: <span id="clinicalRowCount">{{ rows|length }}</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="table-responsive mt-3">
+  <table class="table table-sm table-hover align-middle" id="clinicalTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th class="text-end">Wellness</th>
+        <th class="text-end">PHQ-9</th>
+        <th class="text-end">GAD-7</th>
+        <th class="text-center">Item 9</th>
+        <th>Last check-in</th>
+        <th class="text-end">Open reviews</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      {% set phq = row.latest_phq.total_score if row.latest_phq else 0 %}
+      {% set gad = row.latest_gad.total_score if row.latest_gad else 0 %}
+      {% set is_item9 = row.item9 is not none and row.item9 > 0 %}
+      {% set has_open = row.open_reviews > 0 %}
+      {% set needs = row.needs_attention %}
+      {% set moderate_plus = phq >= 10 or gad >= 10 %}
+      <tr
+        data-name="{{ row.user.display_name|lower }}"
+        data-item9="{{ 1 if is_item9 else 0 }}"
+        data-open_reviews="{{ 1 if has_open else 0 }}"
+        data-needs_attention="{{ 1 if needs else 0 }}"
+        data-moderate_plus="{{ 1 if moderate_plus else 0 }}"
+      >
+        <td class="fw-semibold">
+          {{ row.user.display_name }}
+          {% if needs %}
+          <span class="badge text-bg-danger ms-1">Needs attention</span>
+          {% endif %}
+          {% if is_item9 %}
+          <span class="badge text-bg-danger ms-1">Item 9</span>
+          {% endif %}
+          {% if has_open and not needs %}
+          <span class="badge text-bg-warning text-dark ms-1">Open review</span>
+          {% elif has_open and needs and row.open_reviews > row.open_escalations %}
+          <span class="badge text-bg-warning text-dark ms-1">Open review</span>
+          {% endif %}
+        </td>
+        <td class="text-end">
+          <span class="fw-semibold">{{ row.wellness_score }}</span>
+          <span class="text-muted small">{{ row.wellness_label }}</span>
+        </td>
+        <td class="text-end">{% if row.latest_phq %}<span class="{% if phq >= 10 %}text-warning fw-semibold{% endif %}">{{ row.latest_phq.total_score }}</span>{% else %}—{% endif %}</td>
+        <td class="text-end">{% if row.latest_gad %}<span class="{% if gad >= 10 %}text-warning fw-semibold{% endif %}">{{ row.latest_gad.total_score }}</span>{% else %}—{% endif %}</td>
+        <td class="text-center">{% if is_item9 %}<span class="text-danger fw-semibold">Yes</span>{% else %}—{% endif %}</td>
+        <td class="text-muted small">{% if row.latest_checkin %}{{ row.latest_checkin.created_at.strftime("%Y-%m-%d") }}{% else %}—{% endif %}</td>
+        <td class="text-end">{% if row.open_reviews %}<strong class="text-warning">{{ row.open_reviews }}</strong>{% if row.open_escalations %}<span class="text-danger small"> ({{ row.open_escalations }} esc)</span>{% endif %}{% else %}0{% endif %}</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-warning" href="{{ url_for('main.admin_clinical_user', user_id=row.user.id) }}">Open profile</a>
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+      <tr><td colspan="8" class="text-muted">No participant accounts yet.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  (() => {
+    const table = document.getElementById("clinicalTable");
+    const search = document.getElementById("clinicalSearch");
+    const filter = document.getElementById("clinicalFilter");
+    const count = document.getElementById("clinicalRowCount");
+    if (!table || !search || !filter || !count) return;
+    const rows = Array.from(table.querySelectorAll("tbody tr"));
+
+    function apply() {
+      const q = (search.value || "").trim().toLowerCase();
+      const f = filter.value;
+      let shown = 0;
+      rows.forEach((tr) => {
+        const name = tr.dataset.name || "";
+        const matchesSearch = !q || name.includes(q);
+        const matchesFilter =
+          f === "all" ||
+          (f === "needs_attention" && tr.dataset.needs_attention === "1") ||
+          (f === "item9" && tr.dataset.item9 === "1") ||
+          (f === "open_reviews" && tr.dataset.open_reviews === "1") ||
+          (f === "moderate_plus" && tr.dataset.moderate_plus === "1");
+        const visible = matchesSearch && matchesFilter;
+        tr.style.display = visible ? "" : "none";
+        if (visible) shown += 1;
+      });
+      count.textContent = String(shown);
+    }
+
+    search.addEventListener("input", apply);
+    filter.addEventListener("change", apply);
+    apply();
+  })();
+</script>
+{% endblock %}

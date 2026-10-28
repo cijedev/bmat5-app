@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bmat-checkin-page">
+<h2 class="fw-bold mb-3">Daily Check-In</h2>
+<form method="post" class="row g-4" id="checkinForm">
+  {{ form.hidden_tag() }}
+  <div class="col-lg-6">
+    {{ form.mood.label(class="form-label fw-semibold") }}
+    <div class="text-muted small mb-2">1 = low · 10 = feeling good</div>
+    <div class="d-flex align-items-center gap-2 gap-md-3">
+      <span class="small text-white-50 flex-shrink-0">1</span>
+      <div class="flex-grow-1 px-1">{{ form.mood() }}</div>
+      <span class="small text-white-50 flex-shrink-0">10</span>
+    </div>
+    <div class="mt-2 fw-bold fs-5"><span id="mood-val">{{ form.mood.data or 6 }}</span><span class="text-muted fs-6 fw-normal"> / 10</span></div>
+    {% if form.mood.errors %}
+      <div class="text-danger small mt-1">{{ form.mood.errors[0] }}</div>
+    {% endif %}
+  </div>
+  <div class="col-lg-6">
+    {{ form.stress.label(class="form-label fw-semibold") }}
+    <div class="text-muted small mb-2">1 = calm · 10 = very stressed</div>
+    <div class="d-flex align-items-center gap-2 gap-md-3">
+      <span class="small text-white-50 flex-shrink-0">1</span>
+      <div class="flex-grow-1 px-1">{{ form.stress() }}</div>
+      <span class="small text-white-50 flex-shrink-0">10</span>
+    </div>
+    <div class="mt-2 fw-bold fs-5"><span id="stress-val">{{ form.stress.data or 5 }}</span><span class="text-muted fs-6 fw-normal"> / 10</span></div>
+    {% if form.stress.errors %}
+      <div class="text-danger small mt-1">{{ form.stress.errors[0] }}</div>
+    {% endif %}
+  </div>
+  <div class="col-md-6">
+    {{ form.sleep_hours.label(class="form-label") }}
+    {{ form.sleep_hours(class="form-control form-control-lg") }}
+  </div>
+  <div class="col-12">
+    {{ form.note.label(class="form-label") }}
+    <div class="text-muted small mb-2">Press <kbd class="text-white-50">Enter</kbd> for the next numbered line. <kbd class="text-white-50">Shift+Enter</kbd> adds a line without a new number.</div>
+    {{ form.note(class="form-control font-monospace", rows="6", placeholder="A win, a worry, a boundary you set…") }}
+  </div>
+  <div class="col-12">
+    {{ form.submit(class="btn btn-warning btn-lg") }}
+  </div>
+</form>
+</div>
+<script>
+(function () {
+  const mood = document.getElementById("{{ form.mood.id }}");
+  const stress = document.getElementById("{{ form.stress.id }}");
+  const moodVal = document.getElementById("mood-val");
+  const stressVal = document.getElementById("stress-val");
+  function bind(range, out) {
+    if (!range || !out) return;
+    range.addEventListener("input", function () { out.textContent = range.value; });
+  }
+  bind(mood, moodVal);
+  bind(stress, stressVal);
+
+  const note = document.getElementById("{{ form.note.id }}");
+  if (note) {
+    function maxListNumber(text) {
+      var max = 0;
+      var lines = text.split("\n");
+      for (var i = 0; i < lines.length; i++) {
+        var m = lines[i].match(/^\s*(\d+)\.\s?/);
+        if (m) max = Math.max(max, parseInt(m[1], 10));
+      }
+      return max;
+    }
+    note.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter" || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
+      e.preventDefault();
+      var start = note.selectionStart;
+      var end = note.selectionEnd;
+      var v = note.value;
+      var before = v.slice(0, start);
+      var after = v.slice(end);
+      var full = before + after;
+      var next = maxListNumber(full) + 1;
+      var insert;
+      if (full === "" && next === 1) {
+        insert = "1. ";
+      } else {
+        insert = "\n" + next + ". ";
+      }
+      note.value = before + insert + after;
+      var pos = start + insert.length;
+      note.selectionStart = note.selectionEnd = pos;
+    });
+  }
+})();
+</script>
+{% endblock %}

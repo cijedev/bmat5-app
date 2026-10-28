@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="fw-bold mb-2">Private Session unavailable</h2>
+<div class="bmat-mini-card">
+  <p class="mb-3">{{ reason }}</p>
+  <p class="text-muted small mb-0">
+    Screen sharing needs Socket.IO (via <code class="text-warning">bmat_run.py</code>).
+    The Waitress production entry intentionally keeps this page gated.
+  </p>
+  <a class="btn btn-outline-light mt-3" href="{{ url_for('main.dashboard') }}">Back to home</a>
+</div>
+{% endblock %}

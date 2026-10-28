@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bmat-about text-white vstack gap-4">
+  <header class="bmat-about-hero">
+    <p class="bmat-about-eyebrow mb-2">Your data, your choice</p>
+    <h1 class="bmat-about-title fw-bold mb-3">Delete your account</h1>
+    <p class="bmat-about-lead mb-2">
+      This page explains how to delete your account in <b>Better Mental Wellness (BMW)</b>, the app and website at <a class="link-light" href="https://cije.live/bmw/">https://cije.live/bmw/</a>, developed by <a href="https://cije.live" class="link-light fw-bold" target="_blank" rel="noopener noreferrer">CIJE dev</a>. It covers the BMW Android app too, which opens the same website.
+    </p>
+    <p class="small text-white-50 mb-0">Last updated: October 16, 2026</p>
+  </header>
+
+  {% if just_deleted %}
+  <section class="bmat-mini-card border border-success border-opacity-50">
+    <h2 class="h5 fw-bold mb-2">Your account has been deleted</h2>
+    <p class="mb-0">Your account and the data listed below have been permanently removed. If you're going through a hard time, you can call or text <b>988</b> (US) any time.</p>
+  </section>
+  {% elif just_submitted %}
+  <section class="bmat-mini-card border border-success border-opacity-50">
+    <h2 class="h5 fw-bold mb-2">Request received</h2>
+    <p class="mb-0">If the email you entered matches a BMW account, we will delete that account and its data within 30 days. We may email you from <b>{{ contact_email }}</b> to confirm the request came from you.</p>
+  </section>
+  {% endif %}
+
+  <section class="bmat-mini-card">
+    <h2 class="h5 fw-bold mb-2 bmat-about-heading-gradient">How to delete your account</h2>
+    <p class="mb-2"><b>Option 1: Delete it yourself in the app (instant).</b></p>
+    <ol class="mb-3">
+      <li>Log in to BMW in the app or at <a class="link-light" href="https://cije.live/bmw/login">cije.live/bmw/login</a>.</li>
+      <li>Open <b>Personal profile</b> from the menu and tap <b>Delete account</b> (or use the <b>Delete account</b> link at the bottom of any page).</li>
+      <li>Re-enter your password, tick the confirmation box, and tap <b>Delete my account now</b>.</li>
+    </ol>
+    <p class="mb-2"><b>Option 2: Send us a request (no login needed).</b></p>
+    <ol class="mb-0">
+      <li>Fill in the form below with the email address on your BMW account, or email <b>{{ contact_email }}</b> from that address with the subject “Delete my BMW account”.</li>
+      <li>We may reply to confirm the request came from you.</li>
+      <li>We delete the account and its data within <b>30 days</b> of your request.</li>
+    </ol>
+  </section>
+
+  {% if current_user.is_authenticated and not block_reason and not just_deleted %}
+  <section class="bmat-mini-card border border-danger border-opacity-50" id="delete-now">
+    <h2 class="h5 fw-bold mb-2">Delete my account now</h2>
+    <p class="mb-3">You're signed in as <b>{{ current_user.email }}</b>. This immediately and permanently deletes your account and everything listed under “What gets deleted”. It can't be undone.</p>
+    <form method="post" action="{{ url_for('main.delete_account') }}#delete-now" class="vstack gap-3">
+      {{ now_form.hidden_tag() }}
+      <div>
+        {{ now_form.password.label(class="form-label") }}
+        {{ now_form.password(class="form-control form-control-lg", autocomplete="current-password") }}
+        {% for e in now_form.password.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+      </div>
+      <div class="form-check">
+        {{ now_form.confirm(class="form-check-input") }}
+        {{ now_form.confirm.label(class="form-check-label") }}
+        {% for e in now_form.confirm.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+      </div>
+      <div>{{ now_form.submit(class="btn btn-danger btn-lg") }}</div>
+    </form>
+  </section>
+  {% elif current_user.is_authenticated and block_reason %}
+  <section class="bmat-mini-card">
+    <h2 class="h5 fw-bold mb-2">Staff account</h2>
+    <p class="mb-0">Admin and clinical staff accounts can't be deleted instantly, so the audit trail and admin access stay intact. Use the request form below and we'll handle it.</p>
+  </section>
+  {% endif %}
+
+  {% if not just_deleted %}
+  <section class="bmat-mini-card" id="request">
+    <h2 class="h5 fw-bold mb-2 bmat-about-heading-gradient">Request account deletion</h2>
+    <form method="post" action="{{ url_for('main.delete_account') }}#request" class="vstack gap-3" novalidate>
+      {{ req_form.hidden_tag() }}
+      <div>
+        {{ req_form.email.label(class="form-label") }}
+        {% if current_user.is_authenticated %}
+          {{ req_form.email(class="form-control form-control-lg", readonly=true, value=current_user.email) }}
+          <div class="form-text text-white-50">Locked to the email on your signed-in account.</div>
+        {% else %}
+          {{ req_form.email(class="form-control form-control-lg", placeholder="you@example.com", autocomplete="email") }}
+        {% endif %}
+        {% for e in req_form.email.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+      </div>
+      <div>
+        {{ req_form.reason.label(class="form-label") }}
+        {{ req_form.reason(class="form-control") }}
+        {% for e in req_form.reason.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+      </div>
+      <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+        {{ req_form.website.label() }}
+        {{ req_form.website(tabindex="-1", autocomplete="off") }}
+      </div>
+      <div class="form-check">
+        {{ req_form.confirm(class="form-check-input") }}
+        {{ req_form.confirm.label(class="form-check-label") }}
+        {% for e in req_form.confirm.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+      </div>
+      <div>{{ req_form.submit(class="btn btn-warning btn-lg") }}</div>
+    </form>
+  </section>
+  {% endif %}
+
+  <section class="bmat-mini-card">
+    <h2 class="h5 fw-bold mb-2 bmat-about-heading-gradient">What gets deleted</h2>
+    <ul class="mb-0">
+      <li>Your account: display name, email address, password hash, and settings (email consent, AI journal setting).</li>
+      <li>PHQ-9 and GAD-7 screening answers and scores.</li>
+      <li>Daily check-ins (mood, stress, sleep, and notes).</li>
+      <li>Care-plan activity, topic preferences, and cultural tone settings.</li>
+      <li>Trusted contacts and your check-in requests.</li>
+      <li>AI Wellness journal entries, your daily AI usage counts, and any AI replies you reported.</li>
+      <li>Clinical follow-up flags and staff notes about you.</li>
+      <li>Usage analytics linked to your account (visit sessions, page views, and in-app events), and failed log-in records that stored your email address.</li>
+    </ul>
+  </section>
+
+  <section class="bmat-mini-card">
+    <h2 class="h5 fw-bold mb-2 bmat-about-heading-gradient">What we keep</h2>
+    <ul class="mb-0">
+      <li><b>A record of the deletion.</b> We keep the date, status, and a masked version of the email (for example, <code>j***e@example.com</code>) to show the request was handled. If you used the request form, the full email and optional reason are kept only until we complete the request.</li>
+      <li><b>Staff audit log entries.</b> Entries that record a staff member's action (for example, “viewed a user record”) stay for security, but the link to your account is removed.</li>
+      <li><b>Anonymous usage data.</b> Visits made while you were signed out were never linked to your account. They hold only a random visitor ID and one-way hashes, so they can't be tied back to you.</li>
+      <li><b>Server backups.</b> Administrator-only backup copies of the server made before your deletion may still contain your data until those backups are deleted. We use backups only to recover from a system failure, never to restore a deleted account.</li>
+      <li><b>Emails already sent.</b> Check-in emails you asked BMW to send to your trusted contacts are in their inboxes, and we can't recall them.</li>
+    </ul>
+  </section>
+
+  <section class="bmat-mini-card">
+    <h2 class="h5 fw-bold mb-2 bmat-about-heading-gradient">Questions</h2>
+    <p class="mb-0">
+      Email <b>{{ contact_email }}</b> · CIJE dev, <a href="https://cije.live" class="link-light" target="_blank" rel="noopener noreferrer">cije.live</a>. See also our <a class="link-light" href="{{ url_for('main.privacy') }}">Privacy Policy</a>.
+    </p>
+  </section>
+</div>
+{% endblock %}

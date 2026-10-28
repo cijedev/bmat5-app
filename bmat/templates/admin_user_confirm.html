@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="fw-bold mb-2">View user (read-only)</h2>
+<div class="alert alert-warning">
+  This will reveal one person’s detailed data. Only continue if you have a legitimate need. This action will be logged.
+</div>
+<a class="btn btn-warning" href="{{ url_for('main.admin_user_detail', user_id=user_id, confirm='1') }}">I understand — continue</a>
+<a class="btn btn-outline-light" href="{{ url_for('main.admin_users') }}">Cancel</a>
+{% endblock %}

@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BMW — 20s commercial (record me)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <!--
+    BMW ~20 second commercial spot — record as your video ad
+    1. Run Flask (run_dev.bat) OR open this file in Chrome/Edge (file:// works).
+    2. Fullscreen the browser window (F11).
+    3. Record: Win+G → Capture, or OBS Display/Window Capture.
+    4. One loop ≈ 20s. Trim silence in editor if needed; export 16:9 (1920×1080 or 1280×720).
+
+    With app running:
+    http://127.0.0.1:5000/static/ad/bmat_commercial_20s.html
+
+    Automated video (Playwright): from repo root run
+    python scripts/render_ad_videos.py
+    → bmat/static/videos/bmat_commercial_20s.webm (and .mp4 if ffmpeg is on PATH)
+  -->
+  <style>
+    :root {
+      --b1: #ff3d8d;
+      --b2: #ff9f1c;
+      --b3: #2ec4b6;
+      --b4: #3a86ff;
+      --loop-sec: 20;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: #0a0814;
+      font-family: Inter, system-ui, sans-serif;
+      overflow: hidden;
+    }
+
+    .stage {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(100% 80% at 50% -15%, rgba(255, 159, 28, 0.22), transparent 55%),
+        radial-gradient(70% 50% at 95% 40%, rgba(58, 134, 255, 0.18), transparent 50%),
+        radial-gradient(60% 45% at 5% 70%, rgba(255, 61, 141, 0.12), transparent 45%),
+        linear-gradient(165deg, #120c22 0%, #0a0814 50%, #0d1528 100%);
+    }
+
+    .frame {
+      position: relative;
+      width: min(96vw, calc(96vh * 16 / 9));
+      height: min(96vh, calc(96vw * 9 / 16));
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.4),
+        0 24px 80px rgba(0, 0, 0, 0.55);
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(20px);
+    }
+
+    .bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--b1), var(--b2), var(--b3), var(--b4));
+      transform-origin: left;
+      animation: barLoop calc(var(--loop-sec) * 1s) linear infinite;
+    }
+
+    @keyframes barLoop {
+      from { transform: scaleX(0); }
+      to { transform: scaleX(1); }
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4.5% 6% 5%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.45s ease, transform 0.45s ease;
+      transform: translateY(10px);
+    }
+
+    .scene.is-on {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .logo {
+      width: 68px;
+      height: 68px;
+      border-radius: 18px;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, var(--b1), var(--b2), var(--b3), var(--b4));
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    h1 {
+      font-size: clamp(1.6rem, 4.2vw, 2.65rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #fff;
+      line-height: 1.08;
+      text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .headline-sm {
+      font-size: clamp(1.35rem, 3.6vw, 2.1rem);
+    }
+
+    .sub {
+      margin-top: 0.65rem;
+      font-size: clamp(0.95rem, 2.4vw, 1.35rem);
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.86);
+      max-width: 36ch;
+      line-height: 1.38;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .tagline-block {
+      max-width: min(42ch, 92%);
+      font-size: clamp(1.05rem, 2.6vw, 1.5rem);
+      font-weight: 700;
+      line-height: 1.4;
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    .pill {
+      display: inline-block;
+      margin-top: 0.85rem;
+      padding: 0.32rem 0.8rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      background: rgba(255, 174, 0, 0.22);
+      border: 1px solid rgba(255, 200, 100, 0.4);
+      color: #ffe6b0;
+    }
+
+    .feat-grid {
+      width: 100%;
+      max-width: 920px;
+      margin: 0 auto;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .feat {
+      padding: 0.45rem 0.65rem;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .feat strong {
+      display: block;
+      font-size: clamp(0.82rem, 1.85vw, 1.02rem);
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 0.2rem;
+      letter-spacing: -0.01em;
+    }
+
+    .feat span.detail {
+      font-size: clamp(0.68rem, 1.45vw, 0.88rem);
+      font-weight: 500;
+      line-height: 1.38;
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .cta {
+      margin-top: 0.5rem;
+      font-size: clamp(1.15rem, 3.2vw, 1.65rem);
+      font-weight: 800;
+      background: linear-gradient(90deg, #ffd56a, #7dffc8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hint {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.32);
+      pointer-events: none;
+      z-index: 2;
+      text-align: center;
+      max-width: 90vw;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .scene {
+        transition: opacity 0.2s ease;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="frame" id="frame">
+      <div class="bar" aria-hidden="true"></div>
+
+      <section class="scene is-on" id="sc0" aria-label="Intro">
+        <div class="logo" aria-hidden="true"></div>
+        <h1>BMW</h1>
+        <p class="sub">Better Mental Wellness — check-ins, screenings, and care planning that meets you where you are.</p>
+        <span class="pill">Commercial spot · ~20s loop</span>
+      </section>
+
+      <section class="scene" id="sc1" aria-label="Headline">
+        <h1 class="headline-sm">What you can do with BMW</h1>
+        <p class="sub" style="margin-top:1rem">One app. Steady support.</p>
+      </section>
+
+      <section class="scene" id="sc2" aria-label="Tagline">
+        <p class="tagline-block">Pick what helps today — everything else stays available when you need it.</p>
+      </section>
+
+      <section class="scene" id="sc3" aria-label="Features part 1">
+        <div class="feat-grid">
+          <div class="feat">
+            <strong>Account &amp; privacy</strong>
+            <span class="detail">Secure sign-in, session handling, and optional cookie preferences.</span>
+          </div>
+          <div class="feat">
+            <strong>Screenings</strong>
+            <span class="detail">PHQ-9 (depression) and GAD-7 (anxiety) with scores, severity labels, and history; safety messaging when indicated.</span>
+          </div>
+          <div class="feat">
+            <strong>Daily check-in</strong>
+            <span class="detail">Track mood, stress, sleep, and notes over time.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" id="sc4" aria-label="Features part 2">
+        <div class="feat-grid">
+          <div class="feat">
+            <strong>Care plan</strong>
+            <span class="detail">Adaptive suggestions, tiny actions you can mark done, curated resources and embedded video.</span>
+          </div>
+          <div class="feat">
+            <strong>Personalization</strong>
+            <span class="detail">Tune how strongly topics like rest, sleep, support, and boundaries appear in your plan.</span>
+          </div>
+          <div class="feat">
+            <strong>Trends &amp; history</strong>
+            <span class="detail">Charts and tables for assessments, check-ins, and action completions.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" id="sc5" aria-label="Features part 3">
+        <div class="feat-grid">
+          <div class="feat">
+            <strong>Wellness snapshot</strong>
+            <span class="detail">A wellness score and pattern insights drawn from your latest signals.</span>
+          </div>
+          <div class="feat">
+            <strong>Private session</strong>
+            <span class="detail">Optional browser-based stream so others can join with a room code (you choose what to share).</span>
+          </div>
+          <div class="feat">
+            <strong>Admin (when enabled)</strong>
+            <span class="detail">Ethical, aggregated oversight tools for organizations that deploy BMW.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" id="sc6" aria-label="Call to action">
+        <h1 class="headline-sm">Start your rhythm</h1>
+        <p class="cta">Your wellness. Your pace.</p>
+        <p class="sub" style="margin-top:1rem">BMW — built for real life.</p>
+        <span class="pill" style="margin-top:1rem">Better Mental Wellness</span>
+      </section>
+    </div>
+  </div>
+  <p class="hint">Fullscreen (F11) · One loop ≈ 20s · Record window or display · 16:9</p>
+
+  <script>
+    (function () {
+      var base = [
+        { id: "sc0", ms: 2600 },
+        { id: "sc1", ms: 2000 },
+        { id: "sc2", ms: 2400 },
+        { id: "sc3", ms: 3400 },
+        { id: "sc4", ms: 3400 },
+        { id: "sc5", ms: 3400 },
+        { id: "sc6", ms: 2800 }
+      ];
+      var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var factor = reduce ? 1.55 : 1;
+      var scenes = base.map(function (s) {
+        return { id: s.id, ms: Math.round(s.ms * factor) };
+      });
+      var totalMs = scenes.reduce(function (a, s) { return a + s.ms; }, 0);
+      document.documentElement.style.setProperty("--loop-sec", String(totalMs / 1000));
+
+      var els = scenes.map(function (s) { return document.getElementById(s.id); });
+      var i = 0;
+      var timer;
+
+      function show(idx) {
+        els.forEach(function (el, j) {
+          if (!el) return;
+          el.classList.toggle("is-on", j === idx);
+        });
+      }
+
+      function next() {
+        show(i);
+        var dur = scenes[i].ms;
+        i = (i + 1) % scenes.length;
+        timer = setTimeout(next, dur);
+      }
+
+      next();
+    })();
+  </script>
+</body>
+</html>

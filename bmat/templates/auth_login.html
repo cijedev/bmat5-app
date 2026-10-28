@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="fw-bold mb-3">Log in</h2>
+<form method="post" class="vstack gap-3">
+  {{ form.hidden_tag() }}
+  <div>
+    {{ form.email.label(class="form-label") }}
+    {{ form.email(class="form-control form-control-lg", placeholder="you@example.com") }}
+  </div>
+  <div>
+    {{ form.password.label(class="form-label") }}
+    {{ form.password(class="form-control form-control-lg") }}
+  </div>
+  {{ form.submit(class="btn btn-warning btn-lg") }}
+</form>
+<div class="text-muted mt-3">No account yet? <a href="{{ url_for('main.signup') }}">Create one</a>.</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .personalization-page ul { list-style: none; padding-left: 0; margin-bottom: 0; }
+  .personalization-page li { margin-bottom: 0.65rem; display: flex; align-items: flex-start; gap: 0.5rem; }
+  .personalization-page li label { font-weight: 500; color: rgba(255,255,255,0.9); }
+  .personalization-page input[type="checkbox"] { margin-top: 0.35rem; flex-shrink: 0; }
+</style>
+<div class="personalization-page">
+  <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+    <div>
+      <p class="mb-1"><a class="link-light small" href="{{ url_for('main.personal_profile') }}">← Personal profile</a></p>
+      <h2 class="fw-bold mb-1">Personalization</h2>
+      <div class="text-muted">Tune what the care plan emphasizes. We still prioritize safety when signals are high (e.g. low sleep, high stress).</div>
+    </div>
+  </div>
+
+  <form method="post" class="vstack gap-4">
+    {{ form.hidden_tag() }}
+
+    <div class="bmat-mini-card">
+      {{ form.emphasize_tags.label(class="form-label fw-bold mb-2 d-block") }}
+      <div class="text-muted small mb-2">Boosts matching tiny actions and resource order.</div>
+      {{ form.emphasize_tags() }}
+    </div>
+
+    <div class="bmat-mini-card">
+      {{ form.steer_clear_tags.label(class="form-label fw-bold mb-2 d-block") }}
+      <div class="text-muted small mb-2">Softens suggestions for those topics when your latest check-in and screenings do not require them. “Show more” wins if both are selected.</div>
+      {{ form.steer_clear_tags() }}
+    </div>
+
+    {{ form.submit(class="btn btn-warning btn-lg align-self-start") }}
+  </form>
+
+  <div class="text-white-50 small mt-4">
+    Completing actions still teaches the app which resource tags you use most — that layer stays on top of these choices.
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="theme-color" content="#1a1423">
+  <meta name="description" content="Better Mental Wellness (BMW) — check-ins, PHQ-9 & GAD-7 screenings, and care planning for everyone.">
+  <title>{{ APP_NAME }} ({{ APP_SHORT }})</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:FILL@1" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/app.css') }}" rel="stylesheet">
+</head>
+<body class="bmat-bg">
+<a class="visually-hidden-focusable bmat-skip-link position-absolute top-0 start-0 m-2 btn btn-sm btn-warning" href="#main-content">Skip to main content</a>
+<nav class="navbar navbar-expand-lg navbar-dark bmat-nav sticky-top">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('main.index') }}">
+      <img src="{{ LOGO_URL }}" alt="logo" class="bmat-logo">
+      <span class="fw-bold" title="{{ APP_NAME }}">{{ APP_SHORT }}</span>
+      <span class="badge text-bg-warning ms-2 bmat-badge">ver 6.9</span>
+    </a>
+    <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#bmatMainNav" aria-controls="bmatMainNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="bmatMainNav">
+      <div class="ms-lg-auto mt-3 mt-lg-0 d-flex flex-column flex-lg-row align-items-lg-center align-items-stretch gap-2">
+        <a class="btn btn-sm btn-outline-light align-self-lg-center align-self-stretch" href="{{ url_for('main.about') }}">About BMW</a>
+      {% if current_user.is_authenticated %}
+        <span class="text-white-50 small text-lg-end px-lg-2">Hi, {{ current_user.display_name }}</span>
+        {% if current_user.is_admin %}<span class="badge text-bg-light text-dark align-self-lg-center align-self-start">ADMIN</span>{% elif current_user.is_therapist %}<span class="badge text-bg-warning text-dark align-self-lg-center align-self-start">THERAPIST</span>{% endif %}
+        <a class="btn btn-sm btn-outline-light" href="{{ url_for('main.logout') }}">Sign out</a>
+      {% else %}
+        <a class="btn btn-sm btn-outline-light" href="{{ url_for('main.login') }}">Log in</a>
+        <a class="btn btn-sm btn-warning" href="{{ url_for('main.signup') }}">Create account</a>
+      {% endif %}
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div id="main-content" class="container my-4" tabindex="-1">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }} bmat-alert shadow-sm">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="row g-4 bmat-shell-row {% if current_user.is_authenticated %}bmat-shell-auth{% endif %} {% if current_user.is_authenticated and current_user.is_admin %}bmat-shell-admin{% else %}bmat-shell-has-promo{% endif %}">
+    {% if current_user.is_authenticated %}
+    <div class="col-lg-3 bmat-sidebar-col">
+      <div class="card bmat-card bmat-sidebar-card">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-3 bmat-sidebar-head">
+            <div class="bmat-dot"></div>
+            <div class="bmat-sidebar-head-text">
+              <div class="fw-bold">Menu</div>
+              <div class="text-muted small">Navigate your tools</div>
+            </div>
+            <button
+              type="button"
+              id="bmatSidebarToggle"
+              class="btn btn-sm btn-outline-light ms-auto bmat-sidebar-toggle-btn"
+              aria-label="Toggle compact menu"
+              title="Toggle compact menu">
+              <span class="material-symbols-rounded" id="bmatSidebarToggleIcon" aria-hidden="true">left_panel_open</span>
+            </button>
+          </div>
+
+          {% set ep = request.endpoint or "" %}
+          <div class="list-group list-group-flush bmat-menu-list">
+            <a class="list-group-item list-group-item-action bmat-menu-link {% if ep == 'main.dashboard' %}active{% endif %}" href="{{ url_for('main.dashboard') }}" data-menu-label="Home">
+              <span class="material-symbols-rounded bmat-menu-icon" aria-hidden="true">home</span>
+              <span class="bmat-menu-text" data-menu-label="Home">Home</span>
+            </a>
+            <a class="list-group-item list-group-item-action bmat-menu-link {% if ep == 'main.checkin' %}active{% endif %}" href="{{ url_for('main.checkin') }}" data-menu-label="Daily Check-In">
+              <span class="material-symbols-rounded bmat-menu-icon" aria-hidden="true">today</span>
+              <span class="bmat-menu-text" data-menu-label="Daily Check-In">Daily Check-In</span>
+            </a>
+            <a class="list-group-item list-group-item-action bmat-menu-link {% if ep in ['main.screenings', 'main.phq9', 'main.gad7'] %}active{% endif %}" href="{{ url_for('main.screenings') }}" data-menu-label="Screenings">
+              <span class="material-symbols-rounded bmat-menu-icon" aria-hidden="true">monitor_heart</span>
+              <span class="bmat-menu-text" data-menu-label="Screenings">Screenings</span>
+            </a>
+            <div class="bmat-sidebar-submenu">
+              <button class="list-group-item list-group-item-action d-flex align-items-center justify-content-between gap-2 collapsed bmat-careplan-toggle bmat-menu-link w-100 border-0 {% if ep in ['main.careplan', 'main.about'] %}active{% endif %}" type="button" data-menu-label="Care Plan" data-bs-toggle="collapse" data-bs-target="#bmat-careplan-submenu" aria-expanded="false" aria-controls="bmat-careplan-submenu" id="bmat-careplan-toggle">
+                <span class="d-flex align-items-center gap-2">
+                  <span class="material-symbols-rounded bmat-menu-icon" aria-hidden="true">neurology</span>
+                  <span class="bmat-menu-text">Care Plan</span>
+                </span>
+                <span class="bmat-submenu-caret flex-shrink-0" aria-hidden="true">▼</span>
+              </button>
+              <div class="collapse" id="bmat-careplan-submenu" role="region" aria-labelledby="bmat-careplan-toggle">
+                <a class="list-group-item list-group-item-action bmat-sidebar-careplan-link bmat-menu-link {% if ep == 'main.careplan' %}active{% endif %}" href="{{ url_for('main.careplan') }}" data-menu-label="View care plan">
+                  <span class="material-symbols-rounded bmat-menu-icon" aria-hidden="true">checklist</span>
+                  <span class="bmat-menu-text">View care plan</span>
+                </a>
+                <a class="list-group-item list-group-item-action bmat-sidebar-careplan-link bmat-menu-link {% if ep == 'main.about' %}active{% endif %}" href="{{ url_for('main.about') }}#warren-slides" data-menu-label="Warren Model slides">
+                  <span class="material-symbols-rounded bmat-menu-icon" aria-hidden="true">slideshow</span>
+                  <span class="bmat-menu-text">Warren Model slides</span>
+                </a>
+              </div>
+            </div>
+            <a class="list-group-item list-group-item-action bmat-menu-link {% if ep in ['main.personal_profile', 'main.connections', 'main.personalization'] %}active{% endif %}" href="{{ url_for('main.personal_profile') }}" data-menu-label="Personal profile">
+              <span class="material-symbols-rounded bmat-menu-icon" aria-hidden="true">person</span>
+              <span class="bmat-menu-text" data-menu-label="Personal profile">Personal profile</span>
+            </a>
+            <a class="list-group-item list-group-item-action bmat-menu-link {% if ep == 'main.culture' %}active{% endif %}" href="{{ url_for('main.culture') }}" data-menu-label="Cultural fit">
+              <span class="material-symbols-rounded bmat-menu-icon" aria-hidden="true">diversity_3</span>
+              <span class="bmat-menu-text" data-menu-label="Cultural fit">Cultural fit</span>
+            </a>
+            <a class="list-group-item list-group-item-action bmat-menu-link {% if ep in ['main.ai_wellness', 'main.wellness_assistant_redirect'] %}active{% endif %}" href="{{ url_for('main.ai_wellness') }}" data-menu-label="AI Wellness">
+              <span class="material-symbols-rounded bmat-menu-icon" aria-hidden="true">smart_toy</span>
+              <span class="bmat-menu-text" data-menu-label="AI Wellness">AI Wellness</span>
+            </a>
+            <a class="list-group-item list-group-item-action bmat-menu-link {% if ep == 'main.history' %}active{% endif %}" href="{{ url_for('main.history') }}" data-menu-label="Trends & History">
+              <span class="material-symbols-rounded bmat-menu-icon" aria-hidden="true">query_stats</span>
+              <span class="bmat-menu-text" data-menu-label="Trends & History">Trends & History</span>
+            </a>
+            <a class="list-group-item list-group-item-action bmat-menu-link {% if ep == 'main.screenshare' %}active{% endif %}" href="{{ url_for('main.screenshare') }}" data-menu-label="Private Session">
+              <span class="material-symbols-rounded bmat-menu-icon" aria-hidden="true">groups</span>
+              <span class="bmat-menu-text" data-menu-label="Private Session">Private Session</span>
+            </a>
+            {% if current_user.is_admin %}
+              <div class="mt-3 small text-muted">Admin</div>
+              <a class="list-group-item list-group-item-action bmat-menu-link {% if ep == 'main.admin' %}active{% endif %}" href="{{ url_for('main.admin') }}" data-menu-label="Admin Dashboard">
+                <span class="material-symbols-rounded bmat-menu-icon" aria-hidden="true">admin_panel_settings</span>
+                <span class="bmat-menu-text" data-menu-label="Admin Dashboard">Admin Dashboard</span>
+              </a>
+              <a class="list-group-item list-group-item-action bmat-menu-link {% if ep in ['main.admin_clinical', 'main.admin_clinical_user'] %}active{% endif %}" href="{{ url_for('main.admin_clinical') }}" data-menu-label="Clinical">
+                <span class="material-symbols-rounded bmat-menu-icon" aria-hidden="true">clinical_notes</span>
+                <span class="bmat-menu-text" data-menu-label="Clinical">Clinical</span>
+              </a>
+            {% elif current_user.is_therapist %}
+              <div class="mt-3 small text-muted">Clinical</div>
+              <a class="list-group-item list-group-item-action bmat-menu-link {% if ep in ['main.admin_clinical', 'main.admin_clinical_user', 'main.admin'] %}active{% endif %}" href="{{ url_for('main.admin_clinical') }}" data-menu-label="Clinical">
+                <span class="material-symbols-rounded bmat-menu-icon" aria-hidden="true">clinical_notes</span>
+                <span class="bmat-menu-text" data-menu-label="Clinical">Clinical</span>
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    <div class="{% if current_user.is_authenticated and current_user.is_admin %}col-lg-9{% elif current_user.is_authenticated %}col-lg-6{% else %}col-12 col-lg-8{% endif %} bmat-main-col">
+      <div class="card bmat-card {% if landing_hero_video|default(false) %}bmat-landing-card{% endif %}">
+        <div class="card-body {% if landing_hero_video|default(false) %}p-0 overflow-hidden{% endif %}">
+          {% block content %}{% endblock %}
+        </div>
+      </div>
+      {% if current_user.is_authenticated %}
+      <div class="text-white-50 small mt-3">
+        Disclaimer: Screening tools are not a diagnosis. If you’re in danger, call/text <b>988</b> (US) or local emergency services.
+      </div>
+      {% endif %}
+    </div>
+    {% if not (current_user.is_authenticated and current_user.is_admin) %}
+    <div class="col-12 {% if current_user.is_authenticated %}col-lg-3{% else %}col-lg-4{% endif %} bmat-promo-col">
+      {% include "partials/dr_avant_promo.html" %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<div id="cookieBanner" class="bmat-cookie-banner" role="dialog" aria-live="polite" aria-label="Cookie consent" hidden>
+  <div class="bmat-cookie-content">
+    <div>
+      <div class="fw-bold">Cookie consent</div>
+      <div class="small text-white-50">
+        We use cookies and local storage to keep you signed in, improve app performance, and remember your preferences.
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <button id="cookieDeclineBtn" class="btn btn-sm btn-outline-light" type="button">Decline optional</button>
+      <button id="cookieAcceptBtn" class="btn btn-sm btn-warning" type="button">Accept</button>
+    </div>
+  </div>
+</div>
+<script>
+  (() => {
+    const key = "bmat_cookie_consent_v1";
+    const banner = document.getElementById("cookieBanner");
+    const acceptBtn = document.getElementById("cookieAcceptBtn");
+    const declineBtn = document.getElementById("cookieDeclineBtn");
+    if (!banner || !acceptBtn || !declineBtn) return;
+
+    let saved = null;
+    try {
+      saved = window.localStorage.getItem(key);
+    } catch (e) {}
+
+    if (saved !== "accepted" && saved !== "declined") {
+      banner.hidden = false;
+    }
+
+    acceptBtn.addEventListener("click", () => {
+      try { window.localStorage.setItem(key, "accepted"); } catch (e) {}
+      banner.hidden = true;
+    });
+
+    declineBtn.addEventListener("click", () => {
+      try { window.localStorage.setItem(key, "declined"); } catch (e) {}
+      banner.hidden = true;
+    });
+  })();
+</script>
+<script>
+  (() => {
+    const key = "bmat_sidebar_compact_v1";
+    const body = document.body;
+    const toggleBtn = document.getElementById("bmatSidebarToggle");
+    const toggleIcon = document.getElementById("bmatSidebarToggleIcon");
+    if (!body || !toggleBtn || !toggleIcon) return;
+
+    function setCompact(compact) {
+      body.classList.toggle("bmat-sidebar-icon-only", compact);
+      toggleIcon.textContent = compact ? "left_panel_close" : "left_panel_open";
+      toggleBtn.setAttribute("aria-pressed", compact ? "true" : "false");
+    }
+
+    let compact = false;
+    try {
+      compact = window.localStorage.getItem(key) === "1";
+    } catch (e) {}
+    setCompact(compact);
+
+    toggleBtn.addEventListener("click", () => {
+      compact = !body.classList.contains("bmat-sidebar-icon-only");
+      setCompact(compact);
+      try { window.localStorage.setItem(key, compact ? "1" : "0"); } catch (e) {}
+    });
+  })();
+</script>
+
+<script>
+  window.BMW_SCRIPT_ROOT = {{ (request.script_root or '')|tojson }};
+  window.bmatCsrfToken = function () {
+    const m = document.querySelector('meta[name="csrf-token"]');
+    return m ? m.getAttribute('content') : '';
+  };
+  window.bmatFetch = function (url, options) {
+    options = options || {};
+    const headers = Object.assign({}, options.headers || {});
+    const method = (options.method || 'GET').toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS' && method !== 'TRACE') {
+      headers['X-CSRFToken'] = window.bmatCsrfToken();
+    }
+    return fetch(url, Object.assign({}, options, { headers: headers, credentials: options.credentials || 'same-origin' }));
+  };
+</script>
+</body>
+</html>

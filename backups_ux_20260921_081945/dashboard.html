@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div>
+    <h2 class="fw-bold mb-1">Home</h2>
+    <div class="text-muted">A calm + vibrant space to check in with yourself.</div>
+  </div>
+  <a class="btn btn-warning" href="{{ url_for('main.checkin') }}">New check-in</a>
+</div>
+
+{% if cultural_affirmation %}
+<div class="row g-3 mt-2">
+  <div class="col-12">
+    <div class="bmat-mini-card py-3 d-flex flex-wrap align-items-start justify-content-between gap-3">
+      <div>
+        <div class="small text-muted mb-1">Today's affirmation</div>
+        <div class="fw-semibold">{{ cultural_affirmation }}</div>
+        {% if cultural_tone_label %}
+        <div class="small text-white-50 mt-1">Tone: {{ cultural_tone_label }} · <a href="{{ url_for('main.culture') }}" class="link-light">Adjust</a></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-3 mt-2">
+  <div class="col-md-3">
+    <div class="bmat-kpi">
+      <div class="small text-muted">Wellness score</div>
+      <div class="fs-3 fw-bold">{{ wellness_score }}</div>
+      <div class="small">{{ wellness_label }}</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="bmat-kpi">
+      <div class="small text-muted">Action streak</div>
+      <div class="fs-3 fw-bold">{{ streak_days }}</div>
+      <div class="small">day{{ '' if streak_days == 1 else 's' }}</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="bmat-kpi">
+      <div class="small text-muted">Completed today</div>
+      <div class="fs-3 fw-bold">{{ completed_today_count }}</div>
+      <div class="small">tiny actions</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="bmat-kpi">
+      <div class="small text-muted">Latest check-in mood</div>
+      <div class="fs-3 fw-bold">{{ latest_checkin.mood if latest_checkin else "—" }}</div>
+      <div class="small text-muted">Mood (1–10)</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-lg-4">
+    <div class="bmat-mini-card h-100">
+      <div class="small text-muted mb-1">Today's focus</div>
+      <h5 class="fw-bold mb-2">{{ today_focus_title }}</h5>
+      <div class="text-muted">{{ today_focus_subtitle }}</div>
+      <div class="mt-3 d-flex gap-2 flex-wrap">
+        <a class="btn btn-sm btn-outline-light" href="{{ url_for('main.careplan') }}">Open full care plan</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="bmat-mini-card h-100">
+      <div class="small text-muted mb-1">Quick action</div>
+      {% if quick_action %}
+      <div class="fw-semibold">{{ quick_action.title }}</div>
+      <div class="text-muted mt-2">{{ quick_action.how }}</div>
+      {% if quick_action.cultural_hint %}
+      <div class="small text-white-50 mt-1 fst-italic">{{ quick_action.cultural_hint }}</div>
+      {% endif %}
+      <form method="post" action="{{ url_for('main.complete_action') }}" class="mt-3 d-flex flex-wrap align-items-center gap-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <input type="hidden" name="action_key" value="{{ quick_action.key }}">
+        <input type="hidden" name="action_title" value="{{ quick_action.title }}">
+        <input type="hidden" name="next" value="{{ url_for('main.dashboard') }}">
+        <button type="submit" class="btn btn-sm btn-warning">Mark done now</button>
+        {% if quick_action.youtube %}
+        <a class="btn btn-sm btn-outline-light" target="_blank" rel="noopener" href="https://www.youtube.com/watch?v={{ quick_action.youtube }}">Play guided step</a>
+        {% endif %}
+      </form>
+      {% else %}
+      <div class="text-muted">You already completed today's recommended actions. Great work.</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="bmat-mini-card h-100">
+      <div class="small text-muted mb-1">Continue where you left off</div>
+      <div class="text-muted mb-3">Pick up your next most useful step.</div>
+      <a class="btn btn-sm btn-outline-light" href="{{ continue_path }}">{{ continue_label }}</a>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-12">
+    <div class="bmat-mini-card py-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div>
+        <div class="small text-muted">Human connection</div>
+        <div class="fw-semibold">Trusted contacts & check-in requests</div>
+        <div class="text-muted small">Name people you trust and record moments you want someone to check on you.</div>
+      </div>
+      <a class="btn btn-sm btn-outline-light flex-shrink-0" href="{{ url_for('main.personal_profile') }}">Open personal profile</a>
+    </div>
+  </div>
+</div>
+
+{% if plan.recommended %}
+<div class="row g-3 mt-1">
+  <div class="col-12">
+    <div class="bmat-mini-card">
+      <div class="small text-muted mb-2">Recommended for you</div>
+      {% for rec in plan.recommended %}
+      <div class="d-flex gap-2 mb-2{% if loop.last %} mb-0{% endif %}">
+        <span class="bmat-dot-sm"></span>
+        <div>{{ rec }}</div>
+      </div>
+      {% endfor %}
+      <a class="btn btn-sm btn-outline-light mt-2" href="{{ url_for('main.careplan') }}">See full care plan</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-3 mt-1">
+  <div class="col-lg-6">
+    <div class="bmat-mini-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <div class="small text-muted">Mini trend: check-ins (last 7)</div>
+      </div>
+      {% if checkin_chart.labels|length > 0 %}
+      <div style="height:180px;">
+        <canvas id="dashCheckinChart"></canvas>
+      </div>
+      {% else %}
+      <div class="text-muted small py-4 px-2 text-center" style="min-height:180px;display:flex;align-items:center;justify-content:center;">
+        Log a few daily check-ins to see mood, stress, and sleep trends here.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="bmat-mini-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <div class="small text-muted">Mini trend: assessments</div>
+      </div>
+      {% if assessment_chart.labels|length > 0 %}
+      <div style="height:180px;">
+        <canvas id="dashAssessmentChart"></canvas>
+      </div>
+      {% else %}
+      <div class="text-muted small py-4 px-2 text-center" style="min-height:180px;display:flex;align-items:center;justify-content:center;">
+        Complete PHQ-9 and GAD-7 screenings to see score trends here.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-md-6">
+    <div class="bmat-mini-card h-100">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <div class="small text-muted">Latest PHQ-9</div>
+          <div class="fs-4 fw-bold">{{ latest_phq.total_score if latest_phq else "—" }}</div>
+          <div class="small">{{ latest_phq.severity if latest_phq else "" }}</div>
+        </div>
+        <div>
+          <div class="small text-muted">Latest GAD-7</div>
+          <div class="fs-4 fw-bold">{{ latest_gad.total_score if latest_gad else "—" }}</div>
+          <div class="small">{{ latest_gad.severity if latest_gad else "" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="bmat-mini-card h-100">
+      <div class="small text-muted mb-2">Streak motivation</div>
+      <div class="fw-semibold mb-2">{{ streak_days }} / {{ streak_goal }} days</div>
+      <div class="progress" role="progressbar" aria-label="Streak progress" aria-valuenow="{{ streak_progress_pct }}" aria-valuemin="0" aria-valuemax="100" style="height: 10px;">
+        <div class="progress-bar bg-warning" style="width: {{ streak_progress_pct }}%;"></div>
+      </div>
+      <div class="text-muted mt-2">{{ streak_message }}</div>
+    </div>
+  </div>
+</div>
+
+{% if insights %}
+<hr class="border-white border-opacity-10 my-4">
+<div class="bmat-mini-card">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+      <h5 class="fw-bold mb-1">Pattern insights</h5>
+      <div class="text-muted small">Your recent data is starting to show themes.</div>
+    </div>
+    <span class="bmat-pill">Adaptive</span>
+  </div>
+  <div class="mt-3">
+    {% for insight in insights %}
+      <div class="d-flex gap-2 mb-2">
+        <span class="bmat-dot-sm"></span>
+        <div>{{ insight }}</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<hr class="border-white border-opacity-10 my-4">
+
+<div class="row g-3">
+  {% for a in plan.actions[:3] %}
+  <div class="col-md-4">
+    <div class="bmat-mini-card h-100">
+      <div class="bmat-pill">Next best step</div>
+      <div class="mt-2 fw-semibold">{{ a.title }}</div>
+      <div class="mt-2 text-muted">{{ a.how }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+  const checkinChartData = {{ checkin_chart|tojson }};
+  const assessmentChartData = {{ assessment_chart|tojson }};
+  const textColor = "rgba(255,255,255,0.88)";
+  const gridColor = "rgba(255,255,255,0.10)";
+
+  function lineChart(id, labels, datasets, yMax = null) {
+    const el = document.getElementById(id);
+    if (!el || labels.length === 0) return;
+    new Chart(el, {
+      type: "line",
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: textColor } }
+        },
+        scales: {
+          x: { ticks: { color: textColor }, grid: { color: gridColor } },
+          y: {
+            ticks: { color: textColor },
+            grid: { color: gridColor },
+            beginAtZero: true,
+            suggestedMax: yMax
+          }
+        }
+      }
+    });
+  }
+
+  lineChart(
+    "dashCheckinChart",
+    checkinChartData.labels,
+    [
+      { label: "Mood", data: checkinChartData.mood, borderColor: "rgba(46, 196, 182, 1)", tension: 0.35 },
+      { label: "Stress", data: checkinChartData.stress, borderColor: "rgba(255, 61, 141, 1)", tension: 0.35 },
+      { label: "Sleep", data: checkinChartData.sleep, borderColor: "rgba(255, 198, 103, 1)", tension: 0.35 }
+    ],
+    10
+  );
+
+  lineChart(
+    "dashAssessmentChart",
+    assessmentChartData.labels,
+    [
+      { label: "PHQ-9", data: assessmentChartData.phq, spanGaps: true, borderColor: "rgba(255, 159, 28, 1)", tension: 0.35 },
+      { label: "GAD-7", data: assessmentChartData.gad, spanGaps: true, borderColor: "rgba(58, 134, 255, 1)", tension: 0.35 }
+    ],
+    27
+  );
+</script>
+{% endblock %}

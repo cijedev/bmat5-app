@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="fw-bold mb-2">Clinical / Admin Access (Ethical Mode)</h2>
+<div class="text-muted">This area contains sensitive data. Use aggregated views first, and only access identifying info when necessary. Therapists may use clinical tools; broad admin tools remain admin-only.</div>
+
+<form method="post" class="mt-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" id="ack" required>
+    <label class="form-check-label" for="ack">
+      I understand this is sensitive access and I will minimize identifying data.
+    </label>
+  </div>
+  <button class="btn btn-warning btn-lg mt-3">Continue</button>
+</form>
+{% endblock %}

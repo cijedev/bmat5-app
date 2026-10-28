@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="fw-bold mb-2">Admin Dashboard</h2>
+<div class="text-muted">Ethical default: aggregated metrics.</div>
+
+<div class="row g-3 mt-2">
+  <div class="col-md-3"><div class="bmat-kpi"><div class="small text-muted">Users</div><div class="fs-4 fw-bold">{{ stats.users }}</div></div></div>
+  <div class="col-md-3"><div class="bmat-kpi"><div class="small text-muted">Assessments</div><div class="fs-4 fw-bold">{{ stats.assessments }}</div></div></div>
+  <div class="col-md-3"><div class="bmat-kpi"><div class="small text-muted">Check-ins</div><div class="fs-4 fw-bold">{{ stats.checkins }}</div></div></div>
+  <div class="col-md-3"><div class="bmat-kpi"><div class="small text-muted">High severity</div><div class="fs-4 fw-bold">{{ stats.high_severity }}</div></div></div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-md-3"><div class="bmat-kpi"><div class="small text-muted">Page views (24h)</div><div class="fs-4 fw-bold">{{ stats.visits_24h }}</div></div></div>
+  <div class="col-md-3"><div class="bmat-kpi"><div class="small text-muted">Unique sessions (7d)</div><div class="fs-4 fw-bold">{{ stats.sessions_7d }}</div></div></div>
+  <div class="col-md-3"><div class="bmat-kpi"><div class="small text-muted">Unique sessions (30d)</div><div class="fs-4 fw-bold">{{ stats.sessions_30d }}</div></div></div>
+  <div class="col-md-3"><div class="bmat-kpi"><div class="small text-muted">Signups (30d)</div><div class="fs-4 fw-bold">{{ stats.signup_completed_30d }}</div></div></div>
+</div>
+
+<div class="alert alert-warning mt-4">
+  <b>Safety awareness:</b> PHQ-9 Item #9 flags: <b>{{ stats.item9_flags }}</b> (use for awareness, not surveillance).
+</div>
+
+<div class="d-flex flex-wrap gap-2 mt-3">
+  <a class="btn btn-outline-light" href="{{ url_for('main.admin_users') }}">Users</a>
+  <a class="btn btn-warning" href="{{ url_for('main.admin_user_create') }}">Add user</a>
+  <a class="btn btn-outline-light" href="{{ url_for('main.admin_risk') }}">Risk flags</a>
+  <a class="btn btn-outline-light" href="{{ url_for('main.admin_analytics') }}">Analytics</a>
+  <a class="btn btn-outline-light" href="{{ url_for('main.admin_clinical') }}">Clinical</a>
+  <div class="ms-auto d-flex flex-wrap gap-2 justify-content-end">
+    <a class="btn btn-outline-warning" href="{{ url_for('main.admin_export', table_name='audit_log') }}">Export audit_log</a>
+    <a class="btn btn-outline-warning" href="{{ url_for('main.admin_export', table_name='visit_session') }}">Export visit_session</a>
+    <a class="btn btn-outline-warning" href="{{ url_for('main.admin_export', table_name='visit_event') }}">Export visit_event</a>
+    <a class="btn btn-outline-warning" href="{{ url_for('main.admin_export', table_name='trusted_contact') }}">Export trusted_contact</a>
+    <a class="btn btn-outline-warning" href="{{ url_for('main.admin_export', table_name='check_in_on_me_request') }}">Export check_in_on_me</a>
+    <a class="btn btn-outline-warning" href="{{ url_for('main.admin_export', table_name='clinical_review') }}">Export clinical_review</a>
+  </div>
+</div>
+<div class="bmat-mini-card mt-4" id="deletion-requests">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+    <h3 class="h6 fw-bold mb-0">Account deletion requests</h3>
+    <span class="badge {% if deletion_pending %}text-bg-warning text-dark{% else %}text-bg-secondary{% endif %}">{{ deletion_pending }} pending</span>
+  </div>
+  {% if deletion_requests %}
+  <div class="table-responsive">
+    <table class="table table-sm table-dark align-middle mb-0 small">
+      <thead><tr><th>#</th><th>Received (UTC)</th><th>Email</th><th>Source</th><th>Reason</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      {% for r in deletion_requests %}
+        <tr>
+          <td>{{ r.id }}</td>
+          <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>{{ r.email or '—' }}{% if r.status == 'pending' %}<div class="text-white-50">{% if r.email in deletion_has_account %}account found{% else %}no matching account{% endif %}</div>{% endif %}</td>
+          <td>{{ 'In app' if r.source == 'in_app' else 'Web form' }}</td>
+          <td class="text-break" style="max-width:220px">{{ r.reason or '' }}</td>
+          <td>{{ r.status }}{% if r.admin_note %}<div class="text-white-50">{{ r.admin_note }}</div>{% endif %}{% if r.notify_email_status and r.status == 'pending' %}<div class="text-white-50">email: {{ r.notify_email_status }}</div>{% endif %}</td>
+          <td class="text-end">
+            {% if r.status == 'pending' %}
+            <form method="post" action="{{ url_for('main.admin_deletion_request_process', req_id=r.id) }}" class="d-inline-flex gap-1" onsubmit="return confirm('Are you sure? Delete permanently removes the account and all its data.');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-danger" name="action" value="delete">Delete account</button>
+              <button class="btn btn-sm btn-outline-light" name="action" value="close">Close</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="text-muted small mt-2">Confirm the requester controls the email (reply from admin@cije.live) before deleting. Complete within 30 days. On completion the email is masked.</div>
+  {% else %}
+  <div class="text-muted small">No deletion requests yet.</div>
+  {% endif %}
+</div>
+<div class="bmat-mini-card mt-4" id="ai-reports">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+    <h3 class="h6 fw-bold mb-0">AI content reports</h3>
+    <span class="badge {% if ai_reports_pending %}text-bg-warning text-dark{% else %}text-bg-secondary{% endif %}">{{ ai_reports_pending }} pending</span>
+  </div>
+  {% if ai_reports %}
+  <div class="table-responsive">
+    <table class="table table-sm table-dark align-middle mb-0 small">
+      <thead><tr><th>#</th><th>Received (UTC)</th><th>User</th><th>Reason</th><th>Reported AI reply</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      {% for r in ai_reports %}
+        <tr>
+          <td>{{ r.id }}</td>
+          <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}<div class="text-white-50">{{ r.source.replace('_', ' ') }}</div></td>
+          <td>{% if r.user_id %}<a class="link-light" href="{{ url_for('main.admin_user_detail', user_id=r.user_id) }}">#{{ r.user_id }}</a>{% else %}—{% endif %}</td>
+          <td>{{ ai_report_reasons.get(r.reason, r.reason) }}{% if r.note %}<div class="text-white-50 text-break" style="max-width:200px">{{ r.note }}</div>{% endif %}</td>
+          <td class="text-break" style="max-width:320px">
+            <details><summary class="text-white-50">{{ r.ai_text[:90] }}{% if r.ai_text|length > 90 %}…{% endif %}</summary>
+              <div style="white-space:pre-wrap" class="mt-1">{{ r.ai_text }}</div>
+              {% if r.user_prompt %}<div class="mt-2 text-white-50">User's message (shared by the user):</div><div style="white-space:pre-wrap">{{ r.user_prompt }}</div>{% endif %}
+            </details>
+          </td>
+          <td>{{ r.status }}{% if r.admin_note and r.status != 'pending' %}<div class="text-white-50">{{ r.admin_note }}</div>{% endif %}</td>
+          <td class="text-end">
+            {% if r.status == 'pending' %}
+            <form method="post" action="{{ url_for('main.admin_ai_report_close', report_id=r.id) }}" class="d-inline-flex gap-1">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-light">Close</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="text-muted small mt-2">Users flag AI Wellness replies here (Google Play AI-generated content policy). Review each one, adjust prompts or settings if needed, then close it.</div>
+  {% else %}
+  <div class="text-muted small">No AI content reports yet.</div>
+  {% endif %}
+</div>
+<div class="text-muted small mt-2">Sensitive exports: contact email/phone/notes and check-in messages are redacted unless you add <code class="text-warning">?pii=1</code> to the URL (use only when authorized).</div>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bmat-about text-white vstack gap-4">
+  <header class="bmat-about-hero">
+    <p class="bmat-about-eyebrow mb-2">Heart · evidence · steady support</p>
+    <h1 class="bmat-about-title fw-bold mb-3">About Better Mental Wellness</h1>
+    <p class="bmat-about-lead mb-3">
+      Better Mental Wellness (BMW) is built to feel welcoming for all people seeking mental wellness: daily check-ins, trusted screenings, and care ideas that meet you where you are—not a cold dashboard.
+    </p>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="bmat-pill bmat-pill-accent-1">Daily rhythm</span>
+      <span class="bmat-pill bmat-pill-accent-2">PHQ-9 &amp; GAD-7</span>
+      <span class="bmat-pill bmat-pill-accent-3">Your care plan</span>
+      <span class="bmat-pill bmat-pill-accent-4">Your data, your pace</span>
+    </div>
+  </header>
+
+  <section class="bmat-about-spotlight bmat-about-spotlight-warren bmat-mini-card">
+    <h2 class="h5 fw-bold mb-2 bmat-about-heading-gradient">The Warren Model</h2>
+    <p class="mb-3">
+      BMW draws on the <strong>Warren Model</strong>, which was developed by <a href="https://rosalynavant.com" class="bmat-name-credit text-decoration-none" target="_blank" rel="noopener noreferrer">Dr. Rosalyn Warren Avant</a>, a professional with more than 20 years of experience.
+    </p>
+    <p class="mb-0">
+      The <strong>Warren Model</strong> informs BMW's content and research foundation. Originally developed with a focus on midlife wellness, its principles of steady, culturally humble support are offered here for <strong>everyone</strong> seeking better mental wellness.
+    </p>
+
+    <div class="bmat-warren-slides mt-4 pt-4 border-top border-white border-opacity-10" id="warren-slides">
+      {% if warren_slideshows %}
+      <h3 class="h6 fw-bold mb-2 bmat-about-heading-gradient">Weekly slide decks</h3>
+      <p class="bmat-about-section-hint small mb-3">
+        Choose a week to view slides in your browser — no extra software needed. PDF and web exports open directly; PowerPoint decks (<code>.pptx</code>, <code>.ppsx</code>, <code>.ppt</code>, <code>.pps</code>) use Microsoft’s online viewer when your site is available over <strong>HTTPS</strong>.
+      </p>
+      <div class="d-flex flex-wrap gap-2 mb-3" role="tablist" aria-label="Warren Model weekly slides">
+        {% for s in warren_slideshows %}
+        <button type="button"
+          class="btn btn-sm bmat-warren-week-btn {% if loop.first %}btn-warning{% else %}btn-outline-light{% endif %}"
+          data-url="{{ s.url }}"
+          data-embed-kind="{{ s.embed_kind }}"
+          data-label="{{ s.label }}">
+          {{ s.label }}
+        </button>
+        {% endfor %}
+      </div>
+      <div class="bmat-warren-viewer-wrap rounded overflow-hidden border border-white border-opacity-20 shadow-lg">
+        <iframe id="warren-viewer"
+          class="bmat-warren-viewer"
+          title="Warren Model slide deck"
+          loading="lazy"
+          allowfullscreen></iframe>
+      </div>
+      <p id="warren-viewer-hint" class="small text-muted mt-2 mb-0 d-none" role="status"></p>
+      {% else %}
+      <h3 class="h6 fw-bold mb-2 bmat-about-heading-gradient">Weekly slide decks</h3>
+      <p class="bmat-about-muted small mb-0">
+        Add slide files to <code class="text-white-50">bmat/media/slideshows/</code> and include the week in the name (for example <code class="text-white-50">week1-intro.pptx</code>, <code class="text-white-50">week2-show.ppsx</code>, <code class="text-white-50">week_3.pdf</code>). Supported: <code class="text-white-50">.pptx</code>, <code class="text-white-50">.ppsx</code>, <code class="text-white-50">.ppt</code>, <code class="text-white-50">.pps</code>, <code class="text-white-50">.pdf</code>, <code class="text-white-50">.html</code>.
+      </p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="bmat-about-team bmat-mini-card">
+    <div class="d-flex align-items-start gap-3">
+      <div class="bmat-about-team-icon" aria-hidden="true"></div>
+      <div class="flex-grow-1 min-w-0">
+        <h2 class="h5 fw-bold mb-2 bmat-about-heading-gradient">Development</h2>
+        <p class="mb-3">
+          The main developers for this app are <span class="bmat-name-credit">Jeremy Carpenter</span> and <span class="bmat-name-credit">Ciara Smith</span> of <a href="https://cije.live" class="fw-bold link-light" target="_blank" rel="noopener noreferrer">CIJE dev</a>, a private software development company that started in <strong>2019</strong>.
+        </p>
+        <h3 class="h6 fw-bold mb-2">Designers &amp; collaborators</h3>
+        <p class="mb-0 bmat-about-muted">
+          Further credits for designers and other contributors will be added here.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="bmat-about-features-wrap">
+    <h2 class="h5 fw-bold mb-1 bmat-about-heading-gradient">What you can do with BMW</h2>
+    <p class="bmat-about-section-hint mb-3">Pick what helps today—everything else stays available when you need it.</p>
+    <ul class="bmat-about-feature-list list-unstyled mb-0">
+      <li class="bmat-about-feature-item">
+        <span class="bmat-about-feature-mark" aria-hidden="true"></span>
+        <div><span class="bmat-about-feature-label">Account &amp; privacy</span> — Secure sign-in, session handling, and optional cookie preferences.</div>
+      </li>
+      <li class="bmat-about-feature-item">
+        <span class="bmat-about-feature-mark" aria-hidden="true"></span>
+        <div><span class="bmat-about-feature-label">Screenings</span> — One place to choose PHQ-9 (depression) or GAD-7 (anxiety), with scores, severity labels, and history; safety messaging when indicated.</div>
+      </li>
+      <li class="bmat-about-feature-item">
+        <span class="bmat-about-feature-mark" aria-hidden="true"></span>
+        <div><span class="bmat-about-feature-label">Daily check-in</span> — Track mood, stress, sleep, and notes over time.</div>
+      </li>
+      <li class="bmat-about-feature-item">
+        <span class="bmat-about-feature-mark" aria-hidden="true"></span>
+        <div><span class="bmat-about-feature-label">Care plan</span> — Adaptive suggestions, tiny actions you can mark done, curated resources and embedded video.</div>
+      </li>
+      <li class="bmat-about-feature-item">
+        <span class="bmat-about-feature-mark" aria-hidden="true"></span>
+        <div><span class="bmat-about-feature-label">Personal profile</span> — One place to open Connections (trusted contacts and check-in requests) or Personalization (care-plan topic tuning).</div>
+      </li>
+      <li class="bmat-about-feature-item">
+        <span class="bmat-about-feature-mark" aria-hidden="true"></span>
+        <div><span class="bmat-about-feature-label">Cultural fit</span> — Daily affirmations, language tone, and optional diverse voices / wellness video picks on your care plan (available to anyone).</div>
+      </li>
+      <li class="bmat-about-feature-item">
+        <span class="bmat-about-feature-mark" aria-hidden="true"></span>
+        <div><span class="bmat-about-feature-label">AI Wellness</span> — Optional AI reflection when the server is configured; not a substitute for professional care.</div>
+      </li>
+      <li class="bmat-about-feature-item">
+        <span class="bmat-about-feature-mark" aria-hidden="true"></span>
+        <div><span class="bmat-about-feature-label">Trends &amp; history</span> — Charts and tables for assessments, check-ins, and action completions.</div>
+      </li>
+      <li class="bmat-about-feature-item">
+        <span class="bmat-about-feature-mark" aria-hidden="true"></span>
+        <div><span class="bmat-about-feature-label">Wellness snapshot</span> — A wellness score and pattern insights drawn from your latest signals.</div>
+      </li>
+      <li class="bmat-about-feature-item">
+        <span class="bmat-about-feature-mark" aria-hidden="true"></span>
+        <div><span class="bmat-about-feature-label">Private session</span> — Optional browser-based stream so others can join with a room code (you choose what to share).</div>
+      </li>
+      <li class="bmat-about-feature-item">
+        <span class="bmat-about-feature-mark" aria-hidden="true"></span>
+        <div><span class="bmat-about-feature-label">Warren Model slides</span> — Weekly slide decks in the section above when files are added under <code class="text-white-50">bmat/media/slideshows/</code>.</div>
+      </li>
+      <li class="bmat-about-feature-item">
+        <span class="bmat-about-feature-mark" aria-hidden="true"></span>
+        <div><span class="bmat-about-feature-label">Admin (when enabled)</span> — Ethical, aggregated oversight; optional clinical tools for authorized staff.</div>
+      </li>
+    </ul>
+  </section>
+</div>
+{% if warren_slideshows %}
+<script>
+(function () {
+  const iframe = document.getElementById("warren-viewer");
+  const hint = document.getElementById("warren-viewer-hint");
+  const buttons = document.querySelectorAll(".bmat-warren-week-btn");
+  if (!iframe || !buttons.length) return;
+
+  function officeEmbed(url) {
+    return "https://view.officeapps.live.com/op/embed.aspx?src=" + encodeURIComponent(url);
+  }
+
+  function setActive(btn) {
+    buttons.forEach(function (b) {
+      b.classList.remove("btn-warning");
+      b.classList.add("btn-outline-light");
+    });
+    btn.classList.remove("btn-outline-light");
+    btn.classList.add("btn-warning");
+  }
+
+  function load(btn) {
+    const url = btn.getAttribute("data-url");
+    const kind = btn.getAttribute("data-embed-kind");
+    setActive(btn);
+    if (hint) {
+      hint.classList.add("d-none");
+      hint.textContent = "";
+    }
+
+    if (kind === "pdf" || kind === "html") {
+      iframe.src = url;
+      return;
+    }
+    if (kind === "office") {
+      iframe.src = officeEmbed(url);
+      var host = window.location.hostname || "";
+      var isLocal = host === "localhost" || host === "127.0.0.1";
+      if (hint && window.location.protocol === "http:" && isLocal) {
+        hint.textContent =
+          "PowerPoint preview often cannot load from http://localhost (Microsoft’s viewer needs a public HTTPS URL). Export to PDF for local testing, or deploy with HTTPS.";
+        hint.classList.remove("d-none");
+      } else if (hint && window.location.protocol === "http:" && !isLocal) {
+        hint.textContent = "For reliable PowerPoint preview in the browser, serve this site over HTTPS.";
+        hint.classList.remove("d-none");
+      }
+      return;
+    }
+    iframe.src = url;
+  }
+
+  buttons.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      load(btn);
+    });
+  });
+  load(buttons[0]);
+})();
+</script>
+{% endif %}
+{% endblock %}

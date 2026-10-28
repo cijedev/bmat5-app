@@ -1,0 +1,94 @@
+/* BMW color scheme: default (original neon glass look) */
+:root,
+[data-theme="default"] {
+  /* Brand gradient stops */
+  --bmat-1: #ff3d8d;
+  --bmat-2: #ff9f1c;
+  --bmat-3: #2ec4b6;
+  --bmat-4: #3a86ff;
+  --bmat-1-rgb: 255, 61, 141;
+  --bmat-2-rgb: 255, 159, 28;
+  --bmat-3-rgb: 46, 196, 182;
+  --bmat-4-rgb: 58, 134, 255;
+
+  /* Accent (orange) used for active menu / focus */
+  --bmat-accent-rgb: 255, 159, 28;
+
+  /* Browser chrome / PWA */
+  --bmat-theme-color: #1a1423;
+
+  /* Page background overlays (over bg-1.png) */
+  --bmat-bg-overlay-1: rgba(18, 12, 32, 0.72);
+  --bmat-bg-overlay-2: rgba(12, 10, 22, 0.55);
+  --bmat-bg-overlay-3: rgba(8, 14, 28, 0.78);
+  --bmat-page-overlay:
+    linear-gradient(165deg, var(--bmat-bg-overlay-1) 0%, var(--bmat-bg-overlay-2) 45%, var(--bmat-bg-overlay-3) 100%),
+    radial-gradient(120% 70% at 50% -10%, rgba(var(--bmat-accent-rgb), 0.18), transparent 55%),
+    radial-gradient(80% 50% at 100% 40%, rgba(var(--bmat-4-rgb), 0.14), transparent 50%);
+
+  /* Nav */
+  --bmat-nav-gradient: linear-gradient(
+    90deg,
+    rgba(var(--bmat-1-rgb), 0.85),
+    rgba(var(--bmat-2-rgb), 0.85),
+    rgba(var(--bmat-3-rgb), 0.85),
+    rgba(var(--bmat-4-rgb), 0.85)
+  );
+
+  /* Warning / gold accents */
+  --bmat-warning-start: #d97706;
+  --bmat-warning-end: #b45309;
+  --bmat-gold-soft: #ffe0a8;
+  --bmat-gold: #ffc266;
+  --bmat-gold-light: #ffd699;
+  --bmat-survey-muted: rgba(255, 200, 130, 0.88);
+
+  /* Alerts */
+  --bmat-alert-warning-bg: rgba(120, 85, 0, 0.42);
+  --bmat-alert-warning-border: rgba(255, 200, 90, 0.4);
+  --bmat-alert-danger-bg: rgba(110, 28, 40, 0.45);
+  --bmat-alert-danger-border: rgba(255, 120, 120, 0.35);
+  --bmat-alert-success-bg: rgba(22, 90, 55, 0.42);
+  --bmat-alert-success-border: rgba(120, 220, 160, 0.35);
+  --bmat-alert-info-bg: rgba(25, 60, 110, 0.42);
+  --bmat-alert-info-border: rgba(130, 180, 255, 0.35);
+
+  /* Surfaces */
+  --bmat-sidebar-top: rgba(22, 16, 38, 0.94);
+  --bmat-sidebar-bot: rgba(13, 19, 35, 0.88);
+  --bmat-ai-input-bg: rgba(12, 10, 22, 0.88);
+  --bmat-ai-input-bg-focus: rgba(12, 10, 22, 0.95);
+  --bmat-tooltip-bg: rgba(10, 14, 28, 0.95);
+  --bmat-modal-bg: rgba(22, 16, 38, 0.96);
+  --bmat-cookie-bg: rgba(20, 20, 30, 0.92);
+  --bmat-ai-prompt-bg: rgba(20, 20, 30, 0.55);
+
+  /* Deep solids */
+  --bmat-deep-1: #120c22;
+  --bmat-deep-2: #0a0814;
+  --bmat-deep-3: #0a0a12;
+
+  /* Landing */
+  --bmat-landing-scrim-1: rgba(10, 6, 20, 0.55);
+  --bmat-landing-scrim-2: rgba(18, 10, 28, 0.35);
+  --bmat-landing-scrim-3: rgba(8, 12, 24, 0.62);
+
+  /* Credits / success */
+  --bmat-credit: #a8f5d4;
+  --bmat-credit-hover: #c8ffe0;
+  --bmat-success-badge-gradient: linear-gradient(135deg, #6ee7b7, #22c55e);
+
+  /* Badges / range */
+  --bmat-badge-start: #f6c667;
+  --bmat-badge-end: #ffae00;
+  --bmat-action-badge-gradient: linear-gradient(135deg, var(--bmat-badge-start), var(--bmat-badge-end));
+  --bmat-range-thumb-gradient: linear-gradient(135deg, var(--bmat-badge-end), var(--bmat-2));
+
+  /* Focus */
+  --bmat-focus-ring: rgba(255, 220, 120, 0.95);
+  --bmat-focus-ring-soft: rgba(255, 220, 120, 0.55);
+
+  /* About page text washes */
+  --bmat-about-title-gradient: linear-gradient(115deg, #fff 12%, #ffe8c8 38%, #b8f5ee 68%, #d4e4ff 100%);
+  --bmat-about-sub-gradient: linear-gradient(90deg, #fff, #ffe0bf 45%, #9fe8df 100%);
+}
